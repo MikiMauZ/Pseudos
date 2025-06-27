@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Tratamientos Pseudomonas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 3px solid #e9ecef;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background: none;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #ff6b6b;
+            border-bottom: 3px solid #ff6b6b;
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: #e9ecef;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #ff6b6b;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+        }
+
+        .protocol-step {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid #28a745;
+        }
+
+        .protocol-step.completed {
+            background: #d4edda;
+            border-left-color: #155724;
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .step-number {
+            background: #ff6b6b;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .photo-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #dee2e6;
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .photo-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        .photo-item .delete-photo {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #ff6b6b;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -22px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            border: 3px solid white;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+            transition: width 0.3s ease;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .export-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🦠 Gestor Pseudomonas</h1>
+            <p>Sistema de seguimiento y documentación de tratamientos</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('incident')">📋 Nueva Incidencia</button>
+            <button class="nav-tab" onclick="switchTab('protocol')">🔬 Protocolo</button>
+            <button class="nav-tab" onclick="switchTab('tracking')">📊 Seguimiento</button>
+            <button class="nav-tab" onclick="switchTab('report')">📄 Informe</button>
+        </div>
+
+        <!-- Tab 1: Nueva Incidencia -->
+        <div id="incident" class="tab-content active">
+            <div class="card">
+                <h2>📋 Registro de Nueva Incidencia</h2>
+                <div class="alert alert-warning">
+                    <strong>⚠️ Importante:</strong> La piscina debe ser cerrada al público hasta finalizar el tratamiento
+                </div>
+                
+                <form id="incidentForm">
+                    <div class="form-group">
+                        <label for="poolName">Piscina Afectada:</label>
+                        <input type="text" id="poolName" name="poolName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="detectionDate">Fecha de Detección:</label>
+                        <input type="datetime-local" id="detectionDate" name="detectionDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="responsible">Responsable:</label>
+                        <input type="text" id="responsible" name="responsible" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="initialPh">pH Inicial:</label>
+                        <input type="number" id="initialPh" name="initialPh" step="0.1" min="0" max="14">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="initialFreeChlorine">Cloro Libre Inicial (ppm):</label>
+                        <input type="number" id="initialFreeChlorine" name="initialFreeChlorine" step="0.1" min="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="initialCombinedChlorine">Cloro Combinado Inicial (ppm):</label>
+                        <input type="number" id="initialCombinedChlorine" name="initialCombinedChlorine" step="0.1" min="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="temperature">Temperatura del Agua (°C):</label>
+                        <input type="number" id="temperature" name="temperature" step="0.1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="observations">Observaciones Iniciales:</label>
+                        <textarea id="observations" name="observations" rows="4" placeholder="Describe el estado de la piscina, presencia de algas, etc."></textarea>
+                    </div>
+
+                    <div class="photo-section">
+                        <h4>📸 Fotografías Iniciales (Opcional)</h4>
+                        <p>Documenta el estado inicial de la piscina, algas presentes, equipos de medición, etc.</p>
+                        <input type="file" id="incidentPhotos" accept="image/*" multiple style="margin: 10px 0;">
+                        <div id="incidentPhotoGrid" class="photo-grid"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">💾 Registrar Incidencia</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tab 2: Protocolo -->
+        <div id="protocol" class="tab-content">
+            <div class="card">
+                <h2>🔬 Protocolo de Actuación</h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="protocolProgress" style="width: 0%"></div>
+                </div>
+                <p><span id="progressText">0</span> de 6 pasos completados</p>
+            </div>
+
+            <div class="protocol-step" id="step1">
+                <div class="step-header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="step-number">1</div>
+                        <h3>Limpieza General</h3>
+                    </div>
+                    <button class="btn btn-success" onclick="completeStep(1)">✅ Completado</button>
+                </div>
+                <p><strong>Limpiar:</strong> Fondo, alrededores, rebosadero perimetral, skimmers, pre-filtros de partí y cestillas.</p>
+                <div class="form-group">
+                    <label>Fecha/Hora de Realización:</label>
+                    <input type="datetime-local" id="step1Date">
+                </div>
+                <div class="form-group">
+                    <label>Observaciones:</label>
+                    <textarea id="step1Notes" rows="2" placeholder="Detalles del proceso de limpieza..."></textarea>
+                </div>
+                <div class="photo-section">
+                    <h4>📸 Fotografías del Proceso (Opcional)</h4>
+                    <input type="file" id="step1Photos" accept="image/*" multiple>
+                    <div id="step1PhotoGrid" class="photo-grid"></div>
+                </div>
+            </div>
+
+            <div class="protocol-step" id="step2">
+                <div class="step-header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="step-number">2</div>
+                        <h3>Contra-lavado de Filtros</h3>
+                    </div>
+                    <button class="btn btn-success" onclick="completeStep(2)">✅ Completado</button>
+                </div>
+                <p><strong>Realizar:</strong> Contra-lavado completo de todos los filtros del sistema.</p>
+                <div class="form-group">
+                    <label>Fecha/Hora de Realización:</label>
+                    <input type="datetime-local" id="step2Date">
+                </div>
+                <div class="form-group">
+                    <label>Observaciones:</label>
+                    <textarea id="step2Notes" rows="2" placeholder="Estado de los filtros, duración del contra-lavado..."></textarea>
+                </div>
+                <div class="photo-section">
+                    <h4>📸 Fotografías del Proceso (Opcional)</h4>
+                    <input type="file" id="step2Photos" accept="image/*" multiple>
+                    <div id="step2PhotoGrid" class="photo-grid"></div>
+                </div>
+            </div>
+
+            <div class="protocol-step" id="step3">
+                <div class="step-header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="step-number">3</div>
+                        <h3>Tratamiento de Choque</h3>
+                    </div>
+                    <button class="btn btn-success" onclick="completeStep(3)">✅ Completado</button>
+                </div>
+                <p><strong>Elevar:</strong> Cloro libre residual hasta 20-30 ppm y mantener durante 3-2 horas. pH entre 7.2-7.5</p>
+                <div class="form-group">
+                    <label>Fecha/Hora de Inicio:</label>
+                    <input type="datetime-local" id="step3Date">
+                </div>
+                <div class="form-group">
+                    <label>Cloro añadido (kg):</label>
+                    <input type="number" id="step3Chlorine" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Nivel de cloro alcanzado (ppm):</label>
+                    <input type="number" id="step3ChlorineLevel" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>pH ajustado a:</label>
+                    <input type="number" id="step3Ph" step="0.1" min="7.2" max="7.5">
+                </div>
+                <div class="form-group">
+                    <label>Observaciones:</label>
+                    <textarea id="step3Notes" rows="2" placeholder="Productos utilizados, reacciones observadas..."></textarea>
+                </div>
+                <div class="photo-section">
+                    <h4>📸 Fotografías del Proceso (Opcional)</h4>
+                    <input type="file" id="step3Photos" accept="image/*" multiple>
+                    <div id="step3PhotoGrid" class="photo-grid"></div>
+                </div>
+            </div>
+
+            <div class="protocol-step" id="step4">
+                <div class="step-header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="step-number">4</div>
+                        <h3>Hipercloración del Sistema</h3>
+                    </div>
+                    <button class="btn btn-success" onclick="completeStep(4)">✅ Completado</button>
+                </div>
+                <p><strong>Asegurar:</strong> Que el agua hiperclorada pase a través del sistema de filtración con válvulas, jets y soplantes en funcionamiento.</p>
+                <div class="form-group">
+                    <label>Fecha/Hora de Realización:</label>
+                    <input type="datetime-local" id="step4Date">
+                </div>
+                <div class="form-group">
+                    <label>Tiempo de circulación (minutos):</label>
+                    <input type="number" id="step4Duration">
+                </div>
+                <div class="form-group">
+                    <label>Observaciones:</label>
+                    <textarea id="step4Notes" rows="2" placeholder="Funcionamiento de equipos, incidencias..."></textarea>
+                </div>
+                <div class="photo-section">
+                    <h4>📸 Fotografías del Proceso (Opcional)</h4>
+                    <input type="file" id="step4Photos" accept="image/*" multiple>
+                    <div id="step4PhotoGrid" class="photo-grid"></div>
+                </div>
+            </div>
+
+            <div class="protocol-step" id="step5">
+                <div class="step-header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="step-number">5</div>
+                        <h3>Segundo Contra-lavado</h3>
+                    </div>
+                    <button class="btn btn-success" onclick="completeStep(5)">✅ Completado</button>
+                </div>
+                <p><strong>Realizar:</strong> Nuevo contra-lavado de los filtros al terminar el período de contacto.</p>
+                <div class="form-group">
+                    <label>Fecha/Hora de Realización:</label>
+                    <input type="datetime-local" id="step5Date">
+                </div>
+                <div class="form-group">
+                    <label>Observaciones:</label>
+                    <textarea id="step5Notes" rows="2" placeholder="Estado del agua en el contra-lavado..."></textarea>
+                </div>
+                <div class="photo-section">
+                    <h4>📸 Fotografías del Proceso (Opcional)</h4>
+                    <input type="file" id="step5Photos" accept="image/*" multiple>
+                    <div id="step5PhotoGrid" class="photo-grid"></div>
+                </div>
+            </div>
+
+            <div class="protocol-step" id="step6">
+                <div class="step-header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="step-number">6</div>
+                        <h3>Normalización de Parámetros</h3>
+                    </div>
+                    <button class="btn btn-success" onclick="completeStep(6)">✅ Completado</button>
+                </div>
+                <p><strong>Volver:</strong> A los valores habituales de cloro libre residual antes de reabrir la piscina.</p>
+                <div class="form-group">
+                    <label>Fecha/Hora de Normalización:</label>
+                    <input type="datetime-local" id="step6Date">
+                </div>
+                <div class="form-group">
+                    <label>Cloro libre final (ppm):</label>
+                    <input type="number" id="step6Chlorine" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>pH final:</label>
+                    <input type="number" id="step6Ph" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>¿Piscina lista para reapertura?</label>
+                    <select id="step6Ready">
+                        <option value="">Seleccionar...</option>
+                        <option value="si">Sí - Parámetros normalizados</option>
+                        <option value="no">No - Requiere más tiempo/tratamiento</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Observaciones finales:</label>
+                    <textarea id="step6Notes" rows="2" placeholder="Estado final de la piscina, próximos controles..."></textarea>
+                </div>
+                <div class="photo-section">
+                    <h4>📸 Fotografías Finales (Opcional)</h4>
+                    <input type="file" id="step6Photos" accept="image/*" multiple>
+                    <div id="step6PhotoGrid" class="photo-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Seguimiento -->
+        <div id="tracking" class="tab-content">
+            <div class="card">
+                <h2>📊 Seguimiento del Proceso</h2>
+                <div id="trackingTimeline" class="timeline">
+                    <div class="timeline-item">
+                        <h4>ℹ️ Información</h4>
+                        <p>Aquí aparecerá la cronología de todas las acciones realizadas durante el tratamiento.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Informe -->
+        <div id="report" class="tab-content">
+            <div class="card">
+                <h2>📄 Informe Final</h2>
+                <div id="reportContent">
+                    <div class="alert alert-warning">
+                        <strong>ℹ️ Información:</strong> Complete la incidencia y al menos un paso del protocolo para generar el informe.
+                    </div>
+                </div>
+                
+                <div class="export-buttons">
+                    <button class="btn btn-primary" onclick="exportToPDF()">📄 Exportar a PDF</button>
+                    <button class="btn btn-success" onclick="exportToWord()">📝 Exportar a Word</button>
+                    <button class="btn btn-info" onclick="shareWhatsApp()">📱 Compartir WhatsApp</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        // Global variables
+        let incidentData = {};
+        let protocolSteps = {};
+        let completedSteps = 0;
+        let photoStorage = {};
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            setupPhotoHandlers();
+            setupFormHandler();
+            
+            // Set current date/time as default
+            const now = new Date();
+            const dateString = now.toISOString().slice(0, 16);
+            document.getElementById('detectionDate').value = dateString;
+        });
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all nav tabs
+            const navTabs = document.querySelectorAll('.nav-tab');
+            navTabs.forEach(nav => nav.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Update report if switching to report tab
+            if (tabName === 'report') {
+                generateReport();
+            }
+        }
+
+        // Setup form handler
+        function setupFormHandler() {
+            document.getElementById('incidentForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveIncidentData();
+                alert('✅ Incidencia registrada correctamente');
+                switchTab('protocol');
+                document.querySelector('[onclick="switchTab(\'protocol\')"]').classList.add('active');
+            });
+        }
+
+        // Save incident data
+        function saveIncidentData() {
+            const formData = new FormData(document.getElementById('incidentForm'));
+            incidentData = Object.fromEntries(formData.entries());
+            incidentData.photos = photoStorage.incident || [];
+            saveData();
+            updateTracking('incident', 'Incidencia registrada', `Piscina: ${incidentData.poolName}`);
+        }
+
+        // Complete protocol step
+        function completeStep(stepNumber) {
+            const stepData = {
+                completed: true,
+                date: document.getElementById(`step${stepNumber}Date`).value,
+                notes: document.getElementById(`step${stepNumber}Notes`).value,
+                photos: photoStorage[`step${stepNumber}`] || []
+            };
+
+            // Get additional data for specific steps
+            if (stepNumber === 3) {
+                stepData.chlorine = document.getElementById('step3Chlorine').value;
+                stepData.chlorineLevel = document.getElementById('step3ChlorineLevel').value;
+                stepData.ph = document.getElementById('step3Ph').value;
+            } else if (stepNumber === 4) {
+                stepData.duration = document.getElementById('step4Duration').value;
+            } else if (stepNumber === 6) {
+                stepData.chlorine = document.getElementById('step6Chlorine').value;
+                stepData.ph = document.getElementById('step6Ph').value;
+                stepData.ready = document.getElementById('step6Ready').value;
+            }
+
+            protocolSteps[stepNumber] = stepData;
+            
+            // Mark step as completed visually
+            const stepElement = document.getElementById(`step${stepNumber}`);
+            stepElement.classList.add('completed');
+            
+            // Update progress
+            updateProgress();
+            
+            // Save data
+            saveData();
+            
+            // Update tracking
+            updateTracking('protocol', `Paso ${stepNumber} completado`, getStepTitle(stepNumber));
+            
+            alert(`✅ Paso ${stepNumber} completado correctamente`);
+        }
+
+        // Get step title
+        function getStepTitle(stepNumber) {
+            const titles = {
+                1: 'Limpieza General',
+                2: 'Contra-lavado de Filtros',
+                3: 'Tratamiento de Choque',
+                4: 'Hipercloración del Sistema',
+                5: 'Segundo Contra-lavado',
+                6: 'Normalización de Parámetros'
+            };
+            return titles[stepNumber];
+        }
+
+        // Update progress bar
+        function updateProgress() {
+            completedSteps = Object.keys(protocolSteps).length;
+            const percentage = (completedSteps / 6) * 100;
+            
+            document.getElementById('protocolProgress').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = completedSteps;
+        }
+
+        // Update tracking timeline
+        function updateTracking(type, action, details) {
+            const timeline = document.getElementById('trackingTimeline');
+            const now = new Date();
+            
+            const timelineItem = document.createElement('div');
+            timelineItem.className = 'timeline-item';
+            timelineItem.innerHTML = `
+                <h4>${action}</h4>
+                <p><strong>Fecha:</strong> ${now.toLocaleString('es-ES')}</p>
+                <p><strong>Detalles:</strong> ${details}</p>
+            `;
+            
+            // Insert at the beginning (after info item)
+            if (timeline.children.length > 1) {
+                timeline.insertBefore(timelineItem, timeline.children[1]);
+            } else {
+                timeline.appendChild(timelineItem);
+            }
+        }
+
+        // Setup photo handlers
+        function setupPhotoHandlers() {
+            // Setup photo handlers for each section
+            const sections = ['incident', 'step1', 'step2', 'step3', 'step4', 'step5', 'step6'];
+            
+            sections.forEach(section => {
+                const input = document.getElementById(`${section}Photos`);
+                if (input) {
+                    input.addEventListener('change', function(e) {
+                        handlePhotoUpload(e, section);
+                    });
+                }
+            });
+        }
+
+        // Handle photo upload
+        function handlePhotoUpload(event, section) {
+            const files = Array.from(event.target.files);
+            
+            if (!photoStorage[section]) {
+                photoStorage[section] = [];
+            }
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const photoData = {
+                        id: Date.now() + Math.random(),
+                        name: file.name,
+                        data: e.target.result,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    photoStorage[section].push(photoData);
+                    displayPhotos(section);
+                    saveData();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Display photos in grid
+        function displayPhotos(section) {
+            const grid = document.getElementById(`${section}PhotoGrid`);
+            const photos = photoStorage[section] || [];
+            
+            grid.innerHTML = '';
+            
+            photos.forEach(photo => {
+                const photoDiv = document.createElement('div');
+                photoDiv.className = 'photo-item';
+                photoDiv.innerHTML = `
+                    <img src="${photo.data}" alt="${photo.name}" title="${photo.name}">
+                    <button class="delete-photo" onclick="deletePhoto('${section}', '${photo.id}')" title="Eliminar foto">×</button>
+                `;
+                grid.appendChild(photoDiv);
+            });
+        }
+
+        // Delete photo
+        function deletePhoto(section, photoId) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta foto?')) {
+                photoStorage[section] = photoStorage[section].filter(photo => photo.id != photoId);
+                displayPhotos(section);
+                saveData();
+            }
+        }
+
+        // Generate report
+        function generateReport() {
+            const reportContent = document.getElementById('reportContent');
+            
+            if (!incidentData.poolName) {
+                reportContent.innerHTML = `
+                    <div class="alert alert-warning">
+                        <strong>ℹ️ Información:</strong> Complete la incidencia y al menos un paso del protocolo para generar el informe.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="alert alert-success">
+                    <strong>✅ Informe generado correctamente</strong>
+                </div>
+                
+                <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #ff6b6b; padding-bottom: 20px;">
+                        <h1 style="color: #ff6b6b; margin-bottom: 10px;">INFORME DE TRATAMIENTO</h1>
+                        <h2 style="color: #666;">Pseudomonas aeruginosa</h2>
+                        <p style="font-size: 1.1em; color: #888;">Protocolo de Actuación y Documentación</p>
+                    </div>
+
+                    <div style="margin-bottom: 25px;">
+                        <h3 style="color: #ff6b6b; border-bottom: 2px solid #ff6b6b; padding-bottom: 5px;">📋 DATOS DE LA INCIDENCIA</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                            <tr><td style="padding: 8px; font-weight: bold; width: 30%;">Piscina:</td><td style="padding: 8px;">${incidentData.poolName}</td></tr>
+                            <tr><td style="padding: 8px; font-weight: bold;">Fecha de Detección:</td><td style="padding: 8px;">${new Date(incidentData.detectionDate).toLocaleString('es-ES')}</td></tr>
+                            <tr><td style="padding: 8px; font-weight: bold;">Responsable:</td><td style="padding: 8px;">${incidentData.responsible}</td></tr>
+                            <tr><td style="padding: 8px; font-weight: bold;">pH Inicial:</td><td style="padding: 8px;">${incidentData.initialPh || 'No especificado'}</td></tr>
+                            <tr><td style="padding: 8px; font-weight: bold;">Cloro Libre Inicial:</td><td style="padding: 8px;">${incidentData.initialFreeChlorine || 'No especificado'} ppm</td></tr>
+                            <tr><td style="padding: 8px; font-weight: bold;">Cloro Combinado Inicial:</td><td style="padding: 8px;">${incidentData.initialCombinedChlorine || 'No especificado'} ppm</td></tr>
+                            <tr><td style="padding: 8px; font-weight: bold;">Temperatura:</td><td style="padding: 8px;">${incidentData.temperature || 'No especificado'} °C</td></tr>
+                        </table>
+                        ${incidentData.observations ? `<p style="margin-top: 15px;"><strong>Observaciones:</strong> ${incidentData.observations}</p>` : ''}
+                    </div>
+
+                    <div style="margin-bottom: 25px;">
+                        <h3 style="color: #ff6b6b; border-bottom: 2px solid #ff6b6b; padding-bottom: 5px;">🔬 PROTOCOLO EJECUTADO</h3>
+                        <p style="margin: 15px 0;"><strong>Progreso:</strong> ${completedSteps} de 6 pasos completados (${Math.round((completedSteps/6)*100)}%)</p>
+            `;
+
+            // Add protocol steps
+            for (let i = 1; i <= 6; i++) {
+                const step = protocolSteps[i];
+                const stepTitle = getStepTitle(i);
+                
+                html += `
+                    <div style="margin: 20px 0; padding: 15px; background: ${step ? '#d4edda' : '#f8f9fa'}; border-radius: 8px; border-left: 5px solid ${step ? '#28a745' : '#dee2e6'};">
+                        <h4 style="margin-bottom: 10px;">${i}. ${stepTitle} ${step ? '✅' : '⏳'}</h4>
+                `;
+                
+                if (step) {
+                    html += `
+                        <p><strong>Fecha de realización:</strong> ${step.date ? new Date(step.date).toLocaleString('es-ES') : 'No especificada'}</p>
+                        ${step.chlorine ? `<p><strong>Cloro añadido:</strong> ${step.chlorine} kg</p>` : ''}
+                        ${step.chlorineLevel ? `<p><strong>Nivel de cloro alcanzado:</strong> ${step.chlorineLevel} ppm</p>` : ''}
+                        ${step.ph ? `<p><strong>pH:</strong> ${step.ph}</p>` : ''}
+                        ${step.duration ? `<p><strong>Duración:</strong> ${step.duration} minutos</p>` : ''}
+                        ${step.ready ? `<p><strong>Piscina lista:</strong> ${step.ready === 'si' ? 'Sí' : 'No'}</p>` : ''}
+                        ${step.notes ? `<p><strong>Observaciones:</strong> ${step.notes}</p>` : ''}
+                        ${step.photos && step.photos.length > 0 ? `<p><strong>Fotografías:</strong> ${step.photos.length} imagen(es) documentadas</p>` : ''}
+                    `;
+                } else {
+                    html += '<p style="color: #666; font-style: italic;">Paso pendiente de realizar</p>';
+                }
+                
+                html += '</div>';
+            }
+
+            html += `
+                    </div>
+
+                    <div style="margin-bottom: 25px;">
+                        <h3 style="color: #ff6b6b; border-bottom: 2px solid #ff6b6b; padding-bottom: 5px;">📊 RESUMEN</h3>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <p><strong>Estado del tratamiento:</strong> ${completedSteps === 6 ? '✅ Completado' : `🔄 En progreso (${completedSteps}/6 pasos)`}</p>
+                            <p><strong>Fecha del informe:</strong> ${new Date().toLocaleString('es-ES')}</p>
+                            <p><strong>Documentación fotográfica:</strong> ${getTotalPhotos()} imagen(es) total</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #dee2e6; text-align: center; color: #666;">
+                        <p><em>Informe generado automáticamente por el Sistema de Gestión de Tratamientos Pseudomonas</em></p>
+                        <p style="font-size: 0.9em;">Protocolo basado en Manual Autocontrol Piscinas - Biolinea.com</p>
+                    </div>
+                </div>
+            `;
+
+            reportContent.innerHTML = html;
+        }
+
+        // Get total photos count
+        function getTotalPhotos() {
+            let total = 0;
+            Object.values(photoStorage).forEach(photos => {
+                total += photos.length;
+            });
+            return total;
+        }
+
+        // Export to PDF
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Add title
+            doc.setFontSize(20);
+            doc.setTextColor(255, 107, 107);
+            doc.text('INFORME PSEUDOMONAS', 20, 30);
+            
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Piscina: ${incidentData.poolName || 'No especificada'}`, 20, 50);
+            doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 20, 65);
+            doc.text(`Responsable: ${incidentData.responsible || 'No especificado'}`, 20, 80);
+            
+            // Add protocol progress
+            doc.text(`Progreso del protocolo: ${completedSteps}/6 pasos (${Math.round((completedSteps/6)*100)}%)`, 20, 100);
+            
+            let yPosition = 120;
+            
+            // Add completed steps
+            for (let i = 1; i <= 6; i++) {
+                const step = protocolSteps[i];
+                const stepTitle = getStepTitle(i);
+                
+                if (yPosition > 250) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                doc.setFontSize(12);
+                doc.text(`${i}. ${stepTitle}: ${step ? 'COMPLETADO' : 'PENDIENTE'}`, 20, yPosition);
+                
+                if (step && step.date) {
+                    yPosition += 15;
+                    doc.setFontSize(10);
+                    doc.text(`   Fecha: ${new Date(step.date).toLocaleDateString('es-ES')}`, 20, yPosition);
+                }
+                
+                yPosition += 20;
+            }
+            
+            // Save PDF
+            const filename = `Informe_Pseudomonas_${incidentData.poolName}_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(filename);
+        }
+
+        // Export to Word (HTML format)
+        function exportToWord() {
+            const reportContent = document.getElementById('reportContent').innerHTML;
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Informe Pseudomonas</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1, h2, h3 { color: #ff6b6b; }
+                        table { border-collapse: collapse; width: 100%; }
+                        td { border: 1px solid #ddd; padding: 8px; }
+                        .completed { background-color: #d4edda; }
+                        .pending { background-color: #f8f9fa; }
+                    </style>
+                </head>
+                <body>
+                    ${reportContent}
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([htmlContent], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Informe_Pseudomonas_${incidentData.poolName}_${new Date().toISOString().split('T')[0]}.doc`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Share via WhatsApp
+        function shareWhatsApp() {
+            let message = `🦠 *INFORME PSEUDOMONAS*\n\n`;
+            message += `📋 *Piscina:* ${incidentData.poolName || 'No especificada'}\n`;
+            message += `📅 *Fecha:* ${new Date().toLocaleDateString('es-ES')}\n`;
+            message += `👤 *Responsable:* ${incidentData.responsible || 'No especificado'}\n\n`;
+            message += `🔬 *PROTOCOLO:* ${completedSteps}/6 pasos completados (${Math.round((completedSteps/6)*100)}%)\n\n`;
+            
+            for (let i = 1; i <= 6; i++) {
+                const step = protocolSteps[i];
+                const stepTitle = getStepTitle(i);
+                message += `${i}. ${stepTitle}: ${step ? '✅' : '⏳'}\n`;
+            }
+            
+            message += `\n📊 *Estado:* ${completedSteps === 6 ? 'TRATAMIENTO COMPLETADO ✅' : 'EN PROGRESO 🔄'}`;
+            message += `\n📸 *Fotos documentadas:* ${getTotalPhotos()}`;
+            
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+        }
+
+        // Save data to localStorage equivalent (in-memory storage)
+        function saveData() {
+            const data = {
+                incidentData,
+                protocolSteps,
+                completedSteps,
+                photoStorage,
+                lastSaved: new Date().toISOString()
+            };
+            
+            // Store in memory (simulating localStorage)
+            window.appData = data;
+        }
+
+        // Load data from storage
+        function loadData() {
+            const data = window.appData;
+            
+            if (data) {
+                incidentData = data.incidentData || {};
+                protocolSteps = data.protocolSteps || {};
+                completedSteps = data.completedSteps || 0;
+                photoStorage = data.photoStorage || {};
+                
+                // Restore form data if exists
+                if (incidentData.poolName) {
+                    Object.keys(incidentData).forEach(key => {
+                        const element = document.getElementById(key);
+                        if (element) {
+                            element.value = incidentData[key];
+                        }
+                    });
+                }
+                
+                // Update UI
+                updateProgress();
+                
+                // Display photos
+                Object.keys(photoStorage).forEach(section => {
+                    displayPhotos(section);
+                });
+                
+                // Mark completed steps
+                Object.keys(protocolSteps).forEach(stepNumber => {
+                    const stepElement = document.getElementById(`step${stepNumber}`);
+                    if (stepElement) {
+                        stepElement.classList.add('completed');
+                    }
+                });
+            }
+        }
+
+        // Auto-save every 30 seconds
+        setInterval(saveData, 30000);
+    </script>
+</body>
+</html>
