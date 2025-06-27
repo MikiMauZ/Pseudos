@@ -1163,21 +1163,43 @@
 
         // Cerrar modal de medición
         function closeMeasurementModal() {
-            document.getElementById('measurementModal').style.display = 'none';
-            document.getElementById('measurementForm').reset();
+            const modal = document.getElementById('measurementModal');
+            const form = document.getElementById('measurementForm');
+            
+            modal.style.display = 'none';
+            form.reset();
+            
+            // Limpiar campos específicos por si hay problemas con reset()
+            document.getElementById('measurementDateTime').value = '';
+            document.getElementById('measurementPh').value = '';
+            document.getElementById('measurementFreeChlorine').value = '';
+            document.getElementById('measurementCombinedChlorine').value = '';
+            document.getElementById('measurementTemperature').value = '';
+            document.getElementById('measurementObservations').value = '';
         }
 
         // Manejo del formulario de medición
         document.getElementById('measurementForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            e.stopPropagation();
+            
+            // Validar campos obligatorios
+            const datetime = document.getElementById('measurementDateTime').value;
+            const ph = document.getElementById('measurementPh').value;
+            const freeChlorine = document.getElementById('measurementFreeChlorine').value;
+            
+            if (!datetime || !ph || !freeChlorine) {
+                alert('⚠️ Por favor, completa los campos obligatorios: Fecha/Hora, pH y Cloro Libre.');
+                return;
+            }
             
             const measurement = {
-                datetime: document.getElementById('measurementDateTime').value,
-                ph: document.getElementById('measurementPh').value,
-                freeChlorine: document.getElementById('measurementFreeChlorine').value,
-                combinedChlorine: document.getElementById('measurementCombinedChlorine').value,
-                temperature: document.getElementById('measurementTemperature').value,
-                observations: document.getElementById('measurementObservations').value,
+                datetime: datetime,
+                ph: parseFloat(ph),
+                freeChlorine: parseFloat(freeChlorine),
+                combinedChlorine: document.getElementById('measurementCombinedChlorine').value ? parseFloat(document.getElementById('measurementCombinedChlorine').value) : null,
+                temperature: document.getElementById('measurementTemperature').value ? parseFloat(document.getElementById('measurementTemperature').value) : null,
+                observations: document.getElementById('measurementObservations').value || '',
                 timestamp: new Date()
             };
             
@@ -1185,6 +1207,8 @@
             saveData();
             updateMeasurementTable();
             updateTimeline();
+            
+            // Cerrar modal y limpiar formulario
             closeMeasurementModal();
             
             alert('✅ Medición añadida correctamente.');
@@ -1335,11 +1359,30 @@
                 const margin = 20;
                 
                 // Función para añadir nueva página si es necesario
-                function checkPageBreak(neededHeight) {
+                function checkPageBreak(neededHeight = 20) {
                     if (yPosition + neededHeight > pageHeight - margin) {
                         doc.addPage();
                         yPosition = 20;
+                        return true;
                     }
+                    return false;
+                }
+                
+                // Función para añadir texto con control de páginas
+                function addTextWithPageBreak(text, x, y, maxWidth = 170, lineHeight = 5) {
+                    const lines = doc.splitTextToSize(text, maxWidth);
+                    const totalHeight = lines.length * lineHeight;
+                    
+                    // Verificar si necesitamos nueva página
+                    if (checkPageBreak(totalHeight)) {
+                        y = yPosition;
+                    } else {
+                        yPosition = y;
+                    }
+                    
+                    doc.text(lines, x, yPosition);
+                    yPosition += totalHeight;
+                    return yPosition;
                 }
                 
                 // Encabezado del documento
@@ -1377,9 +1420,7 @@ El protocolo de actuación ha sido ${protocolStatus}, siguiendo estrictamente la
 
 ${currentCompletedSteps === 6 ? 'La instalación ha sido normalizada y se encuentra en condiciones óptimas para su reapertura al público.' : 'El tratamiento se encuentra en fase de ejecución, manteniéndose la instalación cerrada hasta completar todos los pasos del protocolo.'}`;
                 
-                const summaryLines = doc.splitTextToSize(executiveSummary, 170);
-                doc.text(summaryLines, 20, yPosition);
-                yPosition += summaryLines.length * 5 + 15;
+                yPosition = addTextWithPageBreak(executiveSummary, 20, yPosition) + 15;
                 
                 // 1. ANTECEDENTES Y DETECCIÓN
                 checkPageBreak(40);
@@ -1401,9 +1442,7 @@ Los parámetros fisicoquímicos registrados en el momento de la detección fuero
 
 ${treatmentData.incident.observations ? `Observaciones adicionales del estado inicial: ${treatmentData.incident.observations}` : ''}`;
                 
-                const detectionLines = doc.splitTextToSize(detectionText, 170);
-                doc.text(detectionLines, 20, yPosition);
-                yPosition += detectionLines.length * 5 + 15;
+                yPosition = addTextWithPageBreak(detectionText, 20, yPosition) + 15;
                 
                 // 2. METODOLOGÍA Y PROCEDIMIENTOS APLICADOS
                 checkPageBreak(40);
@@ -1417,9 +1456,7 @@ ${treatmentData.incident.observations ? `Observaciones adicionales del estado in
 
 La metodología implementada se basa en la aplicación de un tratamiento de choque con hipoclorito, manteniendo un valor CT (concentración × tiempo) de 3.600, seguido de procedimientos de limpieza y normalización que aseguran la eliminación total del patógeno tanto del agua como de todas las superficies y sistemas de la instalación.`;
                 
-                const methodologyLines = doc.splitTextToSize(methodologyText, 170);
-                doc.text(methodologyLines, 20, yPosition);
-                yPosition += methodologyLines.length * 5 + 15;
+                yPosition = addTextWithPageBreak(methodologyText, 20, yPosition) + 15;
                 
                 // Descripción detallada de cada paso
                 const stepDescriptions = [
@@ -1461,9 +1498,7 @@ La metodología implementada se basa en la aplicación de un tratamiento de choq
                     
                     doc.setFontSize(11);
                     doc.setFont(undefined, 'normal');
-                    const descLines = doc.splitTextToSize(stepDesc.description, 170);
-                    doc.text(descLines, 20, yPosition);
-                    yPosition += descLines.length * 5 + 8;
+                    yPosition = addTextWithPageBreak(stepDesc.description, 20, yPosition) + 8;
                     
                     if (step.completed) {
                         doc.setFont(undefined, 'bold');
@@ -1512,9 +1547,7 @@ La metodología implementada se basa en la aplicación de un tratamiento de choq
                         if (step.notes) {
                             doc.text('Observaciones técnicas:', 25, yPosition);
                             yPosition += 6;
-                            const notesLines = doc.splitTextToSize(step.notes, 165);
-                            doc.text(notesLines, 25, yPosition);
-                            yPosition += notesLines.length * 5;
+                            yPosition = addTextWithPageBreak(step.notes, 25, yPosition, 165);
                         }
                     } else {
                         doc.setFont(undefined, 'bold');
@@ -1540,9 +1573,7 @@ La metodología implementada se basa en la aplicación de un tratamiento de choq
 
 Los controles realizados han abarcado la medición de pH, concentración de cloro libre residual, cloro combinado y temperatura del agua, parámetros críticos para evaluar tanto la eficacia del desinfectante como las condiciones de seguridad para los usuarios una vez finalizado el tratamiento.`;
                     
-                    const monitoringLines = doc.splitTextToSize(monitoringText, 170);
-                    doc.text(monitoringLines, 20, yPosition);
-                    yPosition += monitoringLines.length * 5 + 15;
+                    yPosition = addTextWithPageBreak(monitoringText, 20, yPosition) + 15;
                 }
                 
                 // 4. CONCLUSIONES Y RESULTADOS
@@ -1568,9 +1599,7 @@ La instalación permanece cerrada al público hasta la finalización completa de
 
 Una vez completadas las etapas restantes del protocolo, se procederá a la normalización de la instalación y se emitirá el informe final de conformidad para autorizar la reapertura al público.`;
                 
-                const conclusionsLines = doc.splitTextToSize(conclusionsText, 170);
-                doc.text(conclusionsLines, 20, yPosition);
-                yPosition += conclusionsLines.length * 5 + 20;
+                yPosition = addTextWithPageBreak(conclusionsText, 20, yPosition) + 20;
                 
                 // ANEXO: DATOS TÉCNICOS TABULADOS
                 doc.addPage();
@@ -2069,4 +2098,3 @@ Una vez completadas las etapas restantes del protocolo, se procederá a la norma
     </script>
 </body>
 </html>
-p
