@@ -963,20 +963,35 @@
         // Manejo del formulario de incidencia
         document.getElementById('incidentForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             
-            const formData = new FormData(this);
-            treatmentData.incident = {};
+            // Verificar que los campos obligatorios estén completos
+            const poolName = document.getElementById('poolName').value.trim();
+            const detectionDate = document.getElementById('detectionDate').value;
+            const responsible = document.getElementById('responsible').value.trim();
             
-            for (let [key, value] of formData.entries()) {
-                treatmentData.incident[key] = value;
+            if (!poolName || !detectionDate || !responsible) {
+                alert('⚠️ Por favor, completa todos los campos obligatorios.');
+                return;
             }
+            
+            // Capturar todos los datos del formulario
+            treatmentData.incident = {
+                poolName: poolName,
+                detectionDate: detectionDate,
+                responsible: responsible,
+                initialPh: document.getElementById('initialPh').value,
+                initialFreeChlorine: document.getElementById('initialFreeChlorine').value,
+                initialCombinedChlorine: document.getElementById('initialCombinedChlorine').value,
+                temperature: document.getElementById('temperature').value,
+                observations: document.getElementById('observations').value
+            };
             
             treatmentData.startDate = new Date();
             saveData();
             
             alert('✅ Incidencia registrada correctamente. Procede con el protocolo de tratamiento.');
             switchTab('protocol');
-            document.querySelector('[onclick="switchTab(\'protocol\')"]').click();
         });
 
         // Configurar manejadores de fotos
@@ -1353,14 +1368,14 @@
                 
                 doc.setFontSize(11);
                 const detectionDate = treatmentData.incident.detectionDate ? new Date(treatmentData.incident.detectionDate).toLocaleDateString() : 'No especificada';
-                const completedSteps = treatmentData.protocol.steps.filter(s => s.completed).length;
-                const protocolStatus = completedSteps === 6 ? 'completado exitosamente' : `en curso (${completedSteps}/6 pasos completados)`;
+                const currentCompletedSteps = treatmentData.protocol.steps.filter(s => s.completed).length;
+                const protocolStatus = currentCompletedSteps === 6 ? 'completado exitosamente' : `en curso (${currentCompletedSteps}/6 pasos completados)`;
                 
                 const executiveSummary = `El presente documento constituye la memoria técnica del tratamiento de desinfección aplicado contra Pseudomonas aeruginosa en la instalación ${treatmentData.incident.poolName || 'especificada'}. La detección de la bacteria patógena se produjo el ${detectionDate}, procediéndose inmediatamente al cierre de la instalación según normativa vigente.
 
 El protocolo de actuación ha sido ${protocolStatus}, siguiendo estrictamente las directrices establecidas para la eliminación de Pseudomonas aeruginosa. Todos los procedimientos han sido documentados detalladamente, incluyendo mediciones de parámetros fisicoquímicos y registros fotográficos del proceso.
 
-${completedSteps === 6 ? 'La instalación ha sido normalizada y se encuentra en condiciones óptimas para su reapertura al público.' : 'El tratamiento se encuentra en fase de ejecución, manteniéndose la instalación cerrada hasta completar todos los pasos del protocolo.'}`;
+${currentCompletedSteps === 6 ? 'La instalación ha sido normalizada y se encuentra en condiciones óptimas para su reapertura al público.' : 'El tratamiento se encuentra en fase de ejecución, manteniéndose la instalación cerrada hasta completar todos los pasos del protocolo.'}`;
                 
                 const summaryLines = doc.splitTextToSize(executiveSummary, 170);
                 doc.text(summaryLines, 20, yPosition);
@@ -1538,8 +1553,8 @@ Los controles realizados han abarcado la medición de pH, concentración de clor
                 yPosition += 12;
                 
                 doc.setFontSize(11);
-                const completedSteps = treatmentData.protocol.steps.filter(s => s.completed).length;
-                const conclusionsText = completedSteps === 6 ? 
+                const currentStepCount = treatmentData.protocol.steps.filter(s => s.completed).length;
+                const conclusionsText = currentStepCount === 6 ? 
                     `El tratamiento de desinfección contra Pseudomonas aeruginosa ha sido ejecutado completamente y con éxito, habiendo completado las seis etapas establecidas en el protocolo oficial. 
 
 Todos los procedimientos se han realizado conforme a la normativa vigente, manteniendo los parámetros fisicoquímicos dentro de los rangos establecidos y documentando exhaustivamente cada fase del proceso. La instalación ha sido normalizada y se encuentra en condiciones óptimas para su reapertura al público.
@@ -1547,7 +1562,7 @@ Todos los procedimientos se han realizado conforme a la normativa vigente, mante
 Se ha verificado la eficacia del tratamiento mediante controles analíticos que confirman la eliminación del patógeno y la seguridad del agua para el uso por parte de los usuarios. El valor CT (concentración × tiempo) requerido de 3.600 ha sido alcanzado y mantenido durante el tiempo necesario.
 
 La documentación fotográfica adjunta proporciona evidencia visual del proceso realizado y del estado de la instalación en las diferentes fases del tratamiento.` :
-                    `El tratamiento de desinfección contra Pseudomonas aeruginosa se encuentra actualmente en fase de ejecución, habiendo completado ${completedSteps} de las 6 etapas establecidas en el protocolo oficial.
+                    `El tratamiento de desinfección contra Pseudomonas aeruginosa se encuentra actualmente en fase de ejecución, habiendo completado ${currentStepCount} de las 6 etapas establecidas en el protocolo oficial.
 
 La instalación permanece cerrada al público hasta la finalización completa del protocolo de actuación. Los procedimientos ejecutados hasta la fecha se han realizado conforme a la normativa vigente, manteniendo un registro detallado de todas las actuaciones y controles realizados.
 
@@ -2054,3 +2069,4 @@ Una vez completadas las etapas restantes del protocolo, se procederá a la norma
     </script>
 </body>
 </html>
+p
