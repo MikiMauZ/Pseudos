@@ -1347,12 +1347,34 @@
 
         // Exportar a PDF
         async function exportToPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            showLoading();
-            
             try {
+                // Verificar que jsPDF está disponible
+                if (!window.jspdf) {
+                    throw new Error('jsPDF library not loaded');
+                }
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                showLoading();
+                
+                console.log('Iniciando generación PDF...');
+                console.log('TreatmentData inicial:', treatmentData);
+                
+                // Verificar que tenemos datos mínimos
+                if (!treatmentData.incident || !treatmentData.incident.poolName) {
+                    throw new Error('Debe registrar una incidencia antes de generar el informe');
+                }
+                
+                // Inicializar datos faltantes
+                if (!treatmentData.protocol) {
+                    treatmentData.protocol = { steps: [], photos: {} };
+                }
+                if (!treatmentData.measurements) {
+                    treatmentData.measurements = [];
+                }
+                
+                console.log('Datos inicializados correctamente');
                 // Configuración inicial
                 let yPosition = 20;
                 const pageHeight = doc.internal.pageSize.height;
@@ -1403,6 +1425,7 @@
                 yPosition += 25;
                 
                 // RESUMEN EJECUTIVO
+                console.log('Generando resumen ejecutivo...');
                 checkPageBreak(40);
                 doc.setFontSize(16);
                 doc.setTextColor(0, 0, 0);
@@ -1410,8 +1433,17 @@
                 yPosition += 12;
                 
                 doc.setFontSize(11);
-                const detectionDate = treatmentData.incident.detectionDate ? new Date(treatmentData.incident.detectionDate).toLocaleDateString() : 'No especificada';
-                const currentCompletedSteps = treatmentData.protocol.steps.filter(s => s.completed).length;
+                // Manejo seguro de fechas
+                let detectionDate = 'No especificada';
+                if (treatmentData.incident.detectionDate) {
+                    try {
+                        detectionDate = new Date(treatmentData.incident.detectionDate).toLocaleDateString();
+                    } catch (e) {
+                        detectionDate = treatmentData.incident.detectionDate;
+                    }
+                }
+                
+                const currentCompletedSteps = treatmentData.protocol.steps ? treatmentData.protocol.steps.filter(s => s.completed).length : 0;
                 const protocolStatus = currentCompletedSteps === 6 ? 'completado exitosamente' : `en curso (${currentCompletedSteps}/6 pasos completados)`;
                 
                 const executiveSummary = `El presente documento constituye la memoria técnica del tratamiento de desinfección aplicado contra Pseudomonas aeruginosa en la instalación ${treatmentData.incident.poolName || 'especificada'}. La detección de la bacteria patógena se produjo el ${detectionDate}, procediéndose inmediatamente al cierre de la instalación según normativa vigente.
@@ -1486,8 +1518,17 @@ La metodología implementada se basa en la aplicación de un tratamiento de choq
                     }
                 ];
                 
-                treatmentData.protocol.steps.forEach((step, index) => {
+                console.log('Generando sección de pasos del protocolo...');
+                console.log('Número de pasos:', (treatmentData.protocol.steps || []).length);
+                
+                (treatmentData.protocol.steps || []).forEach((step, index) => {
+                    console.log(`Procesando paso ${step.number}:`, step);
                     const stepDesc = stepDescriptions[step.number - 1];
+                    
+                    if (!stepDesc) {
+                        console.warn(`No se encontró descripción para el paso ${step.number}`);
+                        return;
+                    }
                     
                     checkPageBreak(50);
                     
@@ -1584,7 +1625,7 @@ Los controles realizados han abarcado la medición de pH, concentración de clor
                 yPosition += 12;
                 
                 doc.setFontSize(11);
-                const currentStepCount = treatmentData.protocol.steps.filter(s => s.completed).length;
+                const currentStepCount = treatmentData.protocol.steps ? treatmentData.protocol.steps.filter(s => s.completed).length : 0;
                 const conclusionsText = currentStepCount === 6 ? 
                     `El tratamiento de desinfección contra Pseudomonas aeruginosa ha sido ejecutado completamente y con éxito, habiendo completado las seis etapas establecidas en el protocolo oficial. 
 
@@ -1623,10 +1664,10 @@ Una vez completadas las etapas restantes del protocolo, se procederá a la norma
                     ['Piscina Afectada', treatmentData.incident.poolName || 'No especificada'],
                     ['Fecha de Detección', treatmentData.incident.detectionDate ? new Date(treatmentData.incident.detectionDate).toLocaleString() : 'No especificada'],
                     ['Responsable', treatmentData.incident.responsible || 'No especificado'],
-                    ['pH Inicial', treatmentData.incident.initialPh || 'No medido'],
-                    ['Cloro Libre Inicial (ppm)', treatmentData.incident.initialFreeChlorine || 'No medido'],
-                    ['Cloro Combinado Inicial (ppm)', treatmentData.incident.initialCombinedChlorine || 'No medido'],
-                    ['Temperatura (°C)', treatmentData.incident.temperature || 'No medida']
+                    ['pH Inicial', String(treatmentData.incident.initialPh || 'No medido')],
+                    ['Cloro Libre Inicial (ppm)', String(treatmentData.incident.initialFreeChlorine || 'No medido')],
+                    ['Cloro Combinado Inicial (ppm)', String(treatmentData.incident.initialCombinedChlorine || 'No medido')],
+                    ['Temperatura (°C)', String(treatmentData.incident.temperature || 'No medida')]
                 ];
                 
                 incidentData.forEach((row, index) => {
@@ -1675,7 +1716,7 @@ Una vez completadas las etapas restantes del protocolo, se procederá a la norma
                 
                 for (let i = 1; i <= 6; i++) {
                     checkPageBreak(8);
-                    const step = treatmentData.protocol.steps.find(s => s.number === i);
+                    const step = treatmentData.protocol.steps ? treatmentData.protocol.steps.find(s => s.number === i) : null;
                     doc.setFont(undefined, 'normal');
                     doc.text(i.toString(), 25, yPosition);
                     doc.text(stepNames[i-1], 45, yPosition);
@@ -1710,10 +1751,10 @@ Una vez completadas las etapas restantes del protocolo, se procederá a la norma
                         checkPageBreak(8);
                         doc.setFont(undefined, 'normal');
                         doc.text(new Date(measurement.datetime).toLocaleDateString(), 25, yPosition);
-                        doc.text(measurement.ph || '-', 80, yPosition);
-                        doc.text(measurement.freeChlorine || '-', 95, yPosition);
-                        doc.text(measurement.combinedChlorine || '-', 120, yPosition);
-                        doc.text(measurement.temperature || '-', 145, yPosition);
+                        doc.text(String(measurement.ph || '-'), 80, yPosition);
+                        doc.text(String(measurement.freeChlorine || '-'), 95, yPosition);
+                        doc.text(String(measurement.combinedChlorine || '-'), 120, yPosition);
+                        doc.text(String(measurement.temperature || '-'), 145, yPosition);
                         doc.text(measurement.observations ? 'Sí' : '-', 165, yPosition);
                         yPosition += 8;
                     });
@@ -1798,7 +1839,10 @@ Una vez completadas las etapas restantes del protocolo, se procederá a la norma
             } catch (error) {
                 hideLoading();
                 console.error('Error al generar PDF:', error);
-                alert('❌ Error al generar el PDF. Por favor, inténtalo de nuevo.');
+                console.error('Error stack:', error.stack);
+                console.error('Error message:', error.message);
+                console.error('TreatmentData:', JSON.stringify(treatmentData, null, 2));
+                alert(`❌ Error al generar el PDF: ${error.message || 'Error desconocido'}. Por favor, inténtalo de nuevo.`);
             }
         }
 
@@ -1914,7 +1958,7 @@ Una vez completadas las etapas restantes del protocolo, se procederá a la norma
                     'Normalización'
                 ];
                 
-                treatmentData.protocol.steps.forEach(step => {
+                (treatmentData.protocol.steps || []).forEach(step => {
                     doc.addSection({
                         children: [
                             new Paragraph({
