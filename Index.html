@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestor de Tratamientos Pseudomonas</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -12,70 +18,86 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            background: #f5f7fa;
             min-height: 100vh;
-            padding: 20px;
+            color: #2c3e50;
+            line-height: 1.6;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            overflow: hidden;
+            padding: 20px;
         }
 
         .header {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            background: linear-gradient(135deg, #34495e, #2c3e50);
             color: white;
-            padding: 30px;
+            padding: 40px 30px;
+            margin-bottom: 0;
             text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
 
         .header h1 {
-            font-size: 2.5em;
+            font-size: 2.8em;
             margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-weight: 300;
+            letter-spacing: 1px;
         }
 
         .header p {
-            font-size: 1.2em;
+            font-size: 1.3em;
             opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .main-content {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
 
         .nav-tabs {
             display: flex;
-            background: #f8f9fa;
-            border-bottom: 3px solid #e9ecef;
+            background: #ecf0f1;
+            border-bottom: 2px solid #bdc3c7;
         }
 
         .nav-tab {
             flex: 1;
-            padding: 15px;
+            padding: 18px 15px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
             border: none;
             background: none;
             font-size: 1.1em;
-            font-weight: 600;
+            font-weight: 500;
+            color: #34495e;
+            border-right: 1px solid #bdc3c7;
+        }
+
+        .nav-tab:last-child {
+            border-right: none;
         }
 
         .nav-tab.active {
             background: white;
-            color: #ff6b6b;
-            border-bottom: 3px solid #ff6b6b;
+            color: #e74c3c;
+            border-bottom: 3px solid #e74c3c;
+            font-weight: 600;
         }
 
         .nav-tab:hover:not(.active) {
-            background: #e9ecef;
+            background: #d5dbdb;
+            color: #2c3e50;
         }
 
         .tab-content {
             display: none;
-            padding: 30px;
+            padding: 35px;
         }
 
         .tab-content.active {
@@ -84,85 +106,120 @@
 
         .card {
             background: white;
-            border-radius: 15px;
-            padding: 25px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .card h2 {
+            color: #2c3e50;
             margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            border-left: 5px solid #ff6b6b;
+            font-size: 1.8em;
+            font-weight: 500;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #333;
+            color: #34495e;
+            font-size: 1em;
         }
 
         .form-group input,
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
+            padding: 12px 15px;
+            border: 2px solid #d5dbdb;
             font-size: 1em;
             transition: border-color 0.3s ease;
+            background: white;
         }
 
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #ff6b6b;
-            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
 
         .btn {
-            padding: 12px 24px;
+            padding: 12px 25px;
             border: none;
-            border-radius: 8px;
             font-size: 1em;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin: 5px;
+            margin: 8px 8px 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: #3498db;
             color: white;
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            background: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+            background: #27ae60;
             color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+            transform: translateY(-1px);
         }
 
         .btn-warning {
-            background: linear-gradient(135deg, #f093fb, #f5576c);
+            background: #f39c12;
             color: white;
         }
 
+        .btn-warning:hover {
+            background: #e67e22;
+            transform: translateY(-1px);
+        }
+
         .btn-info {
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            background: #17a2b8;
             color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-1px);
         }
 
         .protocol-step {
             background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 5px solid #28a745;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid #27ae60;
+            border: 1px solid #e8e8e8;
         }
 
         .protocol-step.completed {
@@ -174,157 +231,210 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .step-number {
-            background: #ff6b6b;
+            background: #e74c3c;
             color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
+            width: 35px;
+            height: 35px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
+            font-size: 1.1em;
         }
 
         .photo-section {
-            margin-top: 15px;
-            padding: 15px;
+            margin-top: 20px;
+            padding: 20px;
             background: #f8f9fa;
-            border-radius: 8px;
-            border: 2px dashed #dee2e6;
+            border: 2px dashed #bdc3c7;
+        }
+
+        .photo-section h4 {
+            color: #34495e;
+            margin-bottom: 10px;
         }
 
         .photo-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
+            gap: 15px;
+            margin-top: 15px;
         }
 
         .photo-item {
             position: relative;
-            border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e8e8e8;
         }
 
         .photo-item img {
             width: 100%;
             height: 120px;
             object-fit: cover;
+            display: block;
         }
 
         .photo-item .delete-photo {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(255, 0, 0, 0.8);
+            top: 8px;
+            right: 8px;
+            background: rgba(231, 76, 60, 0.9);
             color: white;
             border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
+            width: 28px;
+            height: 28px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 14px;
         }
 
         .timeline {
             position: relative;
-            padding-left: 30px;
+            padding-left: 40px;
         }
 
         .timeline::before {
             content: '';
             position: absolute;
-            left: 15px;
+            left: 20px;
             top: 0;
             bottom: 0;
-            width: 2px;
-            background: #ff6b6b;
+            width: 3px;
+            background: #e74c3c;
         }
 
         .timeline-item {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
         }
 
         .timeline-item::before {
             content: '';
             position: absolute;
-            left: -22px;
-            top: 20px;
-            width: 12px;
-            height: 12px;
-            background: #ff6b6b;
-            border-radius: 50%;
-            border: 3px solid white;
+            left: -28px;
+            top: 25px;
+            width: 15px;
+            height: 15px;
+            background: #e74c3c;
+            border: 4px solid white;
         }
 
         .export-buttons {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             flex-wrap: wrap;
-            margin-top: 20px;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 2px solid #ecf0f1;
         }
 
         .progress-bar {
             width: 100%;
-            height: 20px;
-            background: #e9ecef;
-            border-radius: 10px;
+            height: 25px;
+            background: #ecf0f1;
             overflow: hidden;
-            margin: 20px 0;
+            margin: 25px 0;
+            border: 1px solid #bdc3c7;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
             transition: width 0.3s ease;
         }
 
         .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid transparent;
         }
 
         .alert-warning {
             background: #fff3cd;
-            border: 1px solid #ffeaa7;
+            border-color: #ffeaa7;
             color: #856404;
         }
 
         .alert-success {
             background: #d4edda;
-            border: 1px solid #c3e6cb;
+            border-color: #c3e6cb;
             color: #155724;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+
+        .export-section {
+            background: #f8f9fa;
+            padding: 25px;
+            margin-top: 30px;
+            border: 1px solid #e8e8e8;
+        }
+
+        .export-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .measurement-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+
+        .measurement-table th,
+        .measurement-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #e8e8e8;
+        }
+
+        .measurement-table th {
+            background: #34495e;
+            color: white;
+            font-weight: 600;
+        }
+
+        .measurement-table tr:nth-child(even) {
+            background: #f8f9fa;
         }
 
         @media (max-width: 768px) {
             .container {
-                margin: 10px;
-                border-radius: 15px;
+                padding: 10px;
             }
             
             .header {
-                padding: 20px;
+                padding: 25px 20px;
             }
             
             .header h1 {
-                font-size: 2em;
+                font-size: 2.2em;
             }
             
             .nav-tabs {
                 flex-direction: column;
+            }
+            
+            .nav-tab {
+                border-right: none;
+                border-bottom: 1px solid #bdc3c7;
             }
             
             .export-buttons {
@@ -335,775 +445,1612 @@
                 width: 100%;
                 margin: 5px 0;
             }
+
+            .step-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🦠 Gestor Pseudomonas</h1>
-            <p>Sistema de seguimiento y documentación de tratamientos</p>
+            <h1>🦠 GESTOR PSEUDOMONAS</h1>
+            <p>Sistema de Seguimiento y Documentación de Tratamientos</p>
         </div>
 
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('incident')">📋 Nueva Incidencia</button>
-            <button class="nav-tab" onclick="switchTab('protocol')">🔬 Protocolo</button>
-            <button class="nav-tab" onclick="switchTab('tracking')">📊 Seguimiento</button>
-            <button class="nav-tab" onclick="switchTab('report')">📄 Informe</button>
-        </div>
-
-        <!-- Tab 1: Nueva Incidencia -->
-        <div id="incident" class="tab-content active">
-            <div class="card">
-                <h2>📋 Registro de Nueva Incidencia</h2>
-                <div class="alert alert-warning">
-                    <strong>⚠️ Importante:</strong> La piscina debe ser cerrada al público hasta finalizar el tratamiento
-                </div>
-                
-                <form id="incidentForm">
-                    <div class="form-group">
-                        <label for="poolName">Piscina Afectada:</label>
-                        <input type="text" id="poolName" name="poolName" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="detectionDate">Fecha de Detección:</label>
-                        <input type="datetime-local" id="detectionDate" name="detectionDate" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="responsible">Responsable:</label>
-                        <input type="text" id="responsible" name="responsible" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="initialPh">pH Inicial:</label>
-                        <input type="number" id="initialPh" name="initialPh" step="0.1" min="0" max="14">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="initialFreeChlorine">Cloro Libre Inicial (ppm):</label>
-                        <input type="number" id="initialFreeChlorine" name="initialFreeChlorine" step="0.1" min="0">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="initialCombinedChlorine">Cloro Combinado Inicial (ppm):</label>
-                        <input type="number" id="initialCombinedChlorine" name="initialCombinedChlorine" step="0.1" min="0">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="temperature">Temperatura del Agua (°C):</label>
-                        <input type="number" id="temperature" name="temperature" step="0.1">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="observations">Observaciones Iniciales:</label>
-                        <textarea id="observations" name="observations" rows="4" placeholder="Describe el estado de la piscina, presencia de algas, etc."></textarea>
-                    </div>
-
-                    <div class="photo-section">
-                        <h4>📸 Fotografías Iniciales (Opcional)</h4>
-                        <p>Documenta el estado inicial de la piscina, algas presentes, equipos de medición, etc.</p>
-                        <input type="file" id="incidentPhotos" accept="image/*" multiple style="margin: 10px 0;">
-                        <div id="incidentPhotoGrid" class="photo-grid"></div>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">💾 Registrar Incidencia</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Tab 2: Protocolo -->
-        <div id="protocol" class="tab-content">
-            <div class="card">
-                <h2>🔬 Protocolo de Actuación</h2>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="protocolProgress" style="width: 0%"></div>
-                </div>
-                <p><span id="progressText">0</span> de 6 pasos completados</p>
+        <div class="main-content">
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="switchTab('incident')">📋 Nueva Incidencia</button>
+                <button class="nav-tab" onclick="switchTab('protocol')">🔬 Protocolo</button>
+                <button class="nav-tab" onclick="switchTab('tracking')">📊 Seguimiento</button>
+                <button class="nav-tab" onclick="switchTab('report')">📄 Informe</button>
             </div>
 
-            <div class="protocol-step" id="step1">
-                <div class="step-header">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="step-number">1</div>
-                        <h3>Limpieza General</h3>
-                    </div>
-                    <button class="btn btn-success" onclick="completeStep(1)">✅ Completado</button>
-                </div>
-                <p><strong>Limpiar:</strong> Fondo, alrededores, rebosadero perimetral, skimmers, pre-filtros de partí y cestillas.</p>
-                <div class="form-group">
-                    <label>Fecha/Hora de Realización:</label>
-                    <input type="datetime-local" id="step1Date">
-                </div>
-                <div class="form-group">
-                    <label>Observaciones:</label>
-                    <textarea id="step1Notes" rows="2" placeholder="Detalles del proceso de limpieza..."></textarea>
-                </div>
-                <div class="photo-section">
-                    <h4>📸 Fotografías del Proceso (Opcional)</h4>
-                    <input type="file" id="step1Photos" accept="image/*" multiple>
-                    <div id="step1PhotoGrid" class="photo-grid"></div>
-                </div>
-            </div>
-
-            <div class="protocol-step" id="step2">
-                <div class="step-header">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="step-number">2</div>
-                        <h3>Contra-lavado de Filtros</h3>
-                    </div>
-                    <button class="btn btn-success" onclick="completeStep(2)">✅ Completado</button>
-                </div>
-                <p><strong>Realizar:</strong> Contra-lavado completo de todos los filtros del sistema.</p>
-                <div class="form-group">
-                    <label>Fecha/Hora de Realización:</label>
-                    <input type="datetime-local" id="step2Date">
-                </div>
-                <div class="form-group">
-                    <label>Observaciones:</label>
-                    <textarea id="step2Notes" rows="2" placeholder="Estado de los filtros, duración del contra-lavado..."></textarea>
-                </div>
-                <div class="photo-section">
-                    <h4>📸 Fotografías del Proceso (Opcional)</h4>
-                    <input type="file" id="step2Photos" accept="image/*" multiple>
-                    <div id="step2PhotoGrid" class="photo-grid"></div>
-                </div>
-            </div>
-
-            <div class="protocol-step" id="step3">
-                <div class="step-header">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="step-number">3</div>
-                        <h3>Tratamiento de Choque</h3>
-                    </div>
-                    <button class="btn btn-success" onclick="completeStep(3)">✅ Completado</button>
-                </div>
-                <p><strong>Elevar:</strong> Cloro libre residual hasta 20-30 ppm y mantener durante 3-2 horas. pH entre 7.2-7.5</p>
-                <div class="form-group">
-                    <label>Fecha/Hora de Inicio:</label>
-                    <input type="datetime-local" id="step3Date">
-                </div>
-                <div class="form-group">
-                    <label>Cloro añadido (kg):</label>
-                    <input type="number" id="step3Chlorine" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label>Nivel de cloro alcanzado (ppm):</label>
-                    <input type="number" id="step3ChlorineLevel" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label>pH ajustado a:</label>
-                    <input type="number" id="step3Ph" step="0.1" min="7.2" max="7.5">
-                </div>
-                <div class="form-group">
-                    <label>Observaciones:</label>
-                    <textarea id="step3Notes" rows="2" placeholder="Productos utilizados, reacciones observadas..."></textarea>
-                </div>
-                <div class="photo-section">
-                    <h4>📸 Fotografías del Proceso (Opcional)</h4>
-                    <input type="file" id="step3Photos" accept="image/*" multiple>
-                    <div id="step3PhotoGrid" class="photo-grid"></div>
-                </div>
-            </div>
-
-            <div class="protocol-step" id="step4">
-                <div class="step-header">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="step-number">4</div>
-                        <h3>Hipercloración del Sistema</h3>
-                    </div>
-                    <button class="btn btn-success" onclick="completeStep(4)">✅ Completado</button>
-                </div>
-                <p><strong>Asegurar:</strong> Que el agua hiperclorada pase a través del sistema de filtración con válvulas, jets y soplantes en funcionamiento.</p>
-                <div class="form-group">
-                    <label>Fecha/Hora de Realización:</label>
-                    <input type="datetime-local" id="step4Date">
-                </div>
-                <div class="form-group">
-                    <label>Tiempo de circulación (minutos):</label>
-                    <input type="number" id="step4Duration">
-                </div>
-                <div class="form-group">
-                    <label>Observaciones:</label>
-                    <textarea id="step4Notes" rows="2" placeholder="Funcionamiento de equipos, incidencias..."></textarea>
-                </div>
-                <div class="photo-section">
-                    <h4>📸 Fotografías del Proceso (Opcional)</h4>
-                    <input type="file" id="step4Photos" accept="image/*" multiple>
-                    <div id="step4PhotoGrid" class="photo-grid"></div>
-                </div>
-            </div>
-
-            <div class="protocol-step" id="step5">
-                <div class="step-header">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="step-number">5</div>
-                        <h3>Segundo Contra-lavado</h3>
-                    </div>
-                    <button class="btn btn-success" onclick="completeStep(5)">✅ Completado</button>
-                </div>
-                <p><strong>Realizar:</strong> Nuevo contra-lavado de los filtros al terminar el período de contacto.</p>
-                <div class="form-group">
-                    <label>Fecha/Hora de Realización:</label>
-                    <input type="datetime-local" id="step5Date">
-                </div>
-                <div class="form-group">
-                    <label>Observaciones:</label>
-                    <textarea id="step5Notes" rows="2" placeholder="Estado del agua en el contra-lavado..."></textarea>
-                </div>
-                <div class="photo-section">
-                    <h4>📸 Fotografías del Proceso (Opcional)</h4>
-                    <input type="file" id="step5Photos" accept="image/*" multiple>
-                    <div id="step5PhotoGrid" class="photo-grid"></div>
-                </div>
-            </div>
-
-            <div class="protocol-step" id="step6">
-                <div class="step-header">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="step-number">6</div>
-                        <h3>Normalización de Parámetros</h3>
-                    </div>
-                    <button class="btn btn-success" onclick="completeStep(6)">✅ Completado</button>
-                </div>
-                <p><strong>Volver:</strong> A los valores habituales de cloro libre residual antes de reabrir la piscina.</p>
-                <div class="form-group">
-                    <label>Fecha/Hora de Normalización:</label>
-                    <input type="datetime-local" id="step6Date">
-                </div>
-                <div class="form-group">
-                    <label>Cloro libre final (ppm):</label>
-                    <input type="number" id="step6Chlorine" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label>pH final:</label>
-                    <input type="number" id="step6Ph" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label>¿Piscina lista para reapertura?</label>
-                    <select id="step6Ready">
-                        <option value="">Seleccionar...</option>
-                        <option value="si">Sí - Parámetros normalizados</option>
-                        <option value="no">No - Requiere más tiempo/tratamiento</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Observaciones finales:</label>
-                    <textarea id="step6Notes" rows="2" placeholder="Estado final de la piscina, próximos controles..."></textarea>
-                </div>
-                <div class="photo-section">
-                    <h4>📸 Fotografías Finales (Opcional)</h4>
-                    <input type="file" id="step6Photos" accept="image/*" multiple>
-                    <div id="step6PhotoGrid" class="photo-grid"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab 3: Seguimiento -->
-        <div id="tracking" class="tab-content">
-            <div class="card">
-                <h2>📊 Seguimiento del Proceso</h2>
-                <div id="trackingTimeline" class="timeline">
-                    <div class="timeline-item">
-                        <h4>ℹ️ Información</h4>
-                        <p>Aquí aparecerá la cronología de todas las acciones realizadas durante el tratamiento.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab 4: Informe -->
-        <div id="report" class="tab-content">
-            <div class="card">
-                <h2>📄 Informe Final</h2>
-                <div id="reportContent">
+            <!-- Tab 1: Nueva Incidencia -->
+            <div id="incident" class="tab-content active">
+                <div class="card">
+                    <h2>📋 Registro de Nueva Incidencia</h2>
                     <div class="alert alert-warning">
-                        <strong>ℹ️ Información:</strong> Complete la incidencia y al menos un paso del protocolo para generar el informe.
+                        <strong>⚠️ IMPORTANTE:</strong> La piscina debe ser cerrada al público hasta finalizar el tratamiento según protocolo oficial.
+                    </div>
+                    
+                    <form id="incidentForm">
+                        <div class="form-group">
+                            <label for="poolName">Piscina Afectada:</label>
+                            <input type="text" id="poolName" name="poolName" required placeholder="Ej: Piscina Principal, Piscina Infantil...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="detectionDate">Fecha y Hora de Detección:</label>
+                            <input type="datetime-local" id="detectionDate" name="detectionDate" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="responsible">Responsable del Tratamiento:</label>
+                            <input type="text" id="responsible" name="responsible" required placeholder="Nombre completo del responsable">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="initialPh">pH Inicial:</label>
+                            <input type="number" id="initialPh" name="initialPh" step="0.1" min="0" max="14" placeholder="7.2">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="initialFreeChlorine">Cloro Libre Inicial (ppm):</label>
+                            <input type="number" id="initialFreeChlorine" name="initialFreeChlorine" step="0.1" min="0" placeholder="1.0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="initialCombinedChlorine">Cloro Combinado Inicial (ppm):</label>
+                            <input type="number" id="initialCombinedChlorine" name="initialCombinedChlorine" step="0.1" min="0" placeholder="0.2">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="temperature">Temperatura del Agua (°C):</label>
+                            <input type="number" id="temperature" name="temperature" step="0.1" placeholder="26.5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="observations">Observaciones Iniciales:</label>
+                            <textarea id="observations" name="observations" rows="4" placeholder="Describe el estado de la piscina, presencia de algas, color del agua, etc."></textarea>
+                        </div>
+
+                        <div class="photo-section">
+                            <h4>📸 Fotografías Iniciales</h4>
+                            <p>Documenta el estado inicial de la piscina, presencia de algas, equipos de medición, etc.</p>
+                            <input type="file" id="incidentPhotos" accept="image/*" multiple style="margin: 10px 0;">
+                            <div id="incidentPhotoGrid" class="photo-grid"></div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">💾 Registrar Incidencia y Comenzar Protocolo</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tab 2: Protocolo -->
+            <div id="protocol" class="tab-content">
+                <div class="card">
+                    <h2>🔬 Protocolo de Actuación Oficial</h2>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="protocolProgress" style="width: 0%"></div>
+                    </div>
+                    <p><strong><span id="progressText">0</span> de 6 pasos completados</strong> | Progreso del tratamiento</p>
+                </div>
+
+                <div class="protocol-step" id="step1">
+                    <div class="step-header">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div class="step-number">1</div>
+                            <div>
+                                <h3>Limpieza General Completa</h3>
+                                <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em;">Preparación del área para el tratamiento</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-success" onclick="completeStep(1)">✅ Marcar Completado</button>
+                    </div>
+                    <div style="background: white; padding: 15px; margin: 15px 0; border: 1px solid #e8e8e8;">
+                        <p><strong>Procedimiento:</strong></p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>Limpiar fondo de la piscina completamente</li>
+                            <li>Limpiar alrededores y rebosadero perimetral</li>
+                            <li>Limpiar skimmers y pre-filtros de partículas</li>
+                            <li>Vaciar y limpiar todas las cestillas</li>
+                        </ul>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora de Realización:</label>
+                        <input type="datetime-local" id="step1Date">
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones del Proceso:</label>
+                        <textarea id="step1Notes" rows="3" placeholder="Detalla el estado encontrado, dificultades, materiales utilizados..."></textarea>
+                    </div>
+                    <div class="photo-section">
+                        <h4>📸 Documentación Fotográfica</h4>
+                        <p>Documenta el antes y después de la limpieza</p>
+                        <input type="file" id="step1Photos" accept="image/*" multiple>
+                        <div id="step1PhotoGrid" class="photo-grid"></div>
                     </div>
                 </div>
-                
-                <div class="export-buttons">
-                    <button class="btn btn-primary" onclick="exportToPDF()">📄 Exportar a PDF</button>
-                    <button class="btn btn-success" onclick="exportToWord()">📝 Exportar a Word</button>
-                    <button class="btn btn-info" onclick="shareWhatsApp()">📱 Compartir WhatsApp</button>
+
+                <div class="protocol-step" id="step2">
+                    <div class="step-header">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div class="step-number">2</div>
+                            <div>
+                                <h3>Contra-lavado de Filtros</h3>
+                                <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em;">Preparación del sistema de filtración</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-success" onclick="completeStep(2)">✅ Marcar Completado</button>
+                    </div>
+                    <div style="background: white; padding: 15px; margin: 15px 0; border: 1px solid #e8e8e8;">
+                        <p><strong>Procedimiento:</strong></p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>Realizar contra-lavado completo de todos los filtros</li>
+                            <li>Verificar el correcto funcionamiento del sistema</li>
+                            <li>Asegurar la eliminación de residuos acumulados</li>
+                        </ul>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora de Realización:</label>
+                        <input type="datetime-local" id="step2Date">
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones del Proceso:</label>
+                        <textarea id="step2Notes" rows="3" placeholder="Estado de los filtros, tiempo de contra-lavado, calidad del agua de salida..."></textarea>
+                    </div>
+                    <div class="photo-section">
+                        <h4>📸 Documentación Fotográfica</h4>
+                        <p>Documenta el proceso de contra-lavado y estado de filtros</p>
+                        <input type="file" id="step2Photos" accept="image/*" multiple>
+                        <div id="step2PhotoGrid" class="photo-grid"></div>
+                    </div>
+                </div>
+
+                <div class="protocol-step" id="step3">
+                    <div class="step-header">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div class="step-number">3</div>
+                            <div>
+                                <h3>Tratamiento de Choque</h3>
+                                <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em;">Hipercloración inicial - CT = 3.600</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-success" onclick="completeStep(3)">✅ Marcar Completado</button>
+                    </div>
+                    <div style="background: white; padding: 15px; margin: 15px 0; border: 1px solid #e8e8e8;">
+                        <p><strong>Parámetros Obligatorios:</strong></p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li><strong>Cloro libre residual:</strong> 20-30 ppm</li>
+                            <li><strong>Tiempo de contacto:</strong> 2-3 horas</li>
+                            <li><strong>pH:</strong> mantener entre 7.2-7.5</li>
+                            <li><strong>Valor CT requerido:</strong> 3.600</li>
+                        </ul>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora de Inicio:</label>
+                        <input type="datetime-local" id="step3DateStart">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora de Finalización:</label>
+                        <input type="datetime-local" id="step3DateEnd">
+                    </div>
+                    <div class="form-group">
+                        <label>Cloro Libre Alcanzado (ppm):</label>
+                        <input type="number" id="step3Chlorine" step="0.1" min="20" max="30" placeholder="25.0">
+                    </div>
+                    <div class="form-group">
+                        <label>pH Final:</label>
+                        <input type="number" id="step3Ph" step="0.1" min="7.2" max="7.5" placeholder="7.3">
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones del Proceso:</label>
+                        <textarea id="step3Notes" rows="3" placeholder="Cantidad de producto utilizado, método de aplicación, mediciones intermedias..."></textarea>
+                    </div>
+                    <div class="photo-section">
+                        <h4>📸 Documentación Fotográfica</h4>
+                        <p>Documenta las mediciones, equipos utilizados y estado del agua</p>
+                        <input type="file" id="step3Photos" accept="image/*" multiple>
+                        <div id="step3PhotoGrid" class="photo-grid"></div>
+                    </div>
+                </div>
+
+                <div class="protocol-step" id="step4">
+                    <div class="step-header">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div class="step-number">4</div>
+                            <div>
+                                <h3>Hipercloración del Sistema</h3>
+                                <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em;">Tratamiento de toda la instalación</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-success" onclick="completeStep(4)">✅ Marcar Completado</button>
+                    </div>
+                    <div style="background: white; padding: 15px; margin: 15px 0; border: 1px solid #e8e8e8;">
+                        <p><strong>Procedimiento Crítico:</strong></p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>Asegurar que el agua hiperclorada pase por todo el sistema de filtración</li>
+                            <li>Abrir by-pass y conectar sistemas auxiliares si existen</li>
+                            <li>Poner en marcha cascadas, jets y soplantes</li>
+                            <li>Permitir que todos los componentes se inunden con la solución</li>
+                            <li><strong>⚠️ CRÍTICO:</strong> Los filtros parados son puntos de riesgo</li>
+                        </ul>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora de Realización:</label>
+                        <input type="datetime-local" id="step4Date">
+                    </div>
+                    <div class="form-group">
+                        <label>Sistemas Activados:</label>
+                        <textarea id="step4Systems" rows="2" placeholder="Lista todos los sistemas activados: cascadas, jets, soplantes, by-pass..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones del Proceso:</label>
+                        <textarea id="step4Notes" rows="3" placeholder="Tiempo necesario para inundación completa, verificaciones realizadas..."></textarea>
+                    </div>
+                    <div class="photo-section">
+                        <h4>📸 Documentación Fotográfica</h4>
+                        <p>Documenta todos los sistemas en funcionamiento</p>
+                        <input type="file" id="step4Photos" accept="image/*" multiple>
+                        <div id="step4PhotoGrid" class="photo-grid"></div>
+                    </div>
+                </div>
+
+                <div class="protocol-step" id="step5">
+                    <div class="step-header">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div class="step-number">5</div>
+                            <div>
+                                <h3>Segundo Contra-lavado</h3>
+                                <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em;">Limpieza post-tratamiento</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-success" onclick="completeStep(5)">✅ Marcar Completado</button>
+                    </div>
+                    <div style="background: white; padding: 15px; margin: 15px 0; border: 1px solid #e8e8e8;">
+                        <p><strong>Procedimiento:</strong></p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>Realizar contra-lavado completo tras el período de contacto</li>
+                            <li>Eliminar residuos del tratamiento de choque</li>
+                            <li>Preparar el sistema para la normalización</li>
+                        </ul>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora de Realización:</label>
+                        <input type="datetime-local" id="step5Date">
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones del Proceso:</label>
+                        <textarea id="step5Notes" rows="3" placeholder="Calidad del agua de salida, tiempo de contra-lavado, estado final..."></textarea>
+                    </div>
+                    <div class="photo-section">
+                        <h4>📸 Documentación Fotográfica</h4>
+                        <p>Documenta el proceso final de limpieza</p>
+                        <input type="file" id="step5Photos" accept="image/*" multiple>
+                        <div id="step5PhotoGrid" class="photo-grid"></div>
+                    </div>
+                </div>
+
+                <div class="protocol-step" id="step6">
+                    <div class="step-header">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div class="step-number">6</div>
+                            <div>
+                                <h3>Normalización</h3>
+                                <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em;">Vuelta a parámetros normales</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-success" onclick="completeStep(6)">✅ Marcar Completado</button>
+                    </div>
+                    <div style="background: white; padding: 15px; margin: 15px 0; border: 1px solid #e8e8e8;">
+                        <p><strong>Parámetros Finales:</strong></p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>Reducir cloro libre a valores habituales (1-3 ppm)</li>
+                            <li>Verificar pH en rango normal (7.2-7.6)</li>
+                            <li>Confirmar que todos los parámetros son seguros</li>
+                            <li><strong>Solo entonces</strong> reabrir al público</li>
+                        </ul>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora de Normalización:</label>
+                        <input type="datetime-local" id="step6Date">
+                    </div>
+                    <div class="form-group">
+                        <label>Cloro Libre Final (ppm):</label>
+                        <input type="number" id="step6Chlorine" step="0.1" min="1" max="3" placeholder="1.5">
+                    </div>
+                    <div class="form-group">
+                        <label>pH Final:</label>
+                        <input type="number" id="step6Ph" step="0.1" min="7.2" max="7.6" placeholder="7.4">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora de Reapertura:</label>
+                        <input type="datetime-local" id="step6Reopening">
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones Finales:</label>
+                        <textarea id="step6Notes" rows="3" placeholder="Verificaciones finales, estado del agua, medidas adicionales..."></textarea>
+                    </div>
+                    <div class="photo-section">
+                        <h4>📸 Documentación Fotográfica</h4>
+                        <p>Documenta las mediciones finales y estado final de la piscina</p>
+                        <input type="file" id="step6Photos" accept="image/*" multiple>
+                        <div id="step6PhotoGrid" class="photo-grid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Seguimiento -->
+            <div id="tracking" class="tab-content">
+                <div class="card">
+                    <h2>📊 Seguimiento del Tratamiento</h2>
+                    <div id="trackingContent">
+                        <div class="alert alert-info">
+                            <strong>ℹ️ Información:</strong> Registra las mediciones periódicas durante el tratamiento para un seguimiento completo.
+                        </div>
+
+                        <div style="margin-bottom: 30px;">
+                            <h3>Mediciones Periódicas</h3>
+                            <table class="measurement-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha/Hora</th>
+                                        <th>pH</th>
+                                        <th>Cloro Libre (ppm)</th>
+                                        <th>Cloro Combinado (ppm)</th>
+                                        <th>Temperatura (°C)</th>
+                                        <th>Observaciones</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="measurementTableBody">
+                                    <!-- Las mediciones se añadirán dinámicamente -->
+                                </tbody>
+                            </table>
+                            
+                            <button class="btn btn-primary" onclick="addMeasurement()">➕ Añadir Medición</button>
+                        </div>
+
+                        <div class="timeline" id="treatmentTimeline">
+                            <!-- Timeline items se añadirán dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Informe -->
+            <div id="report" class="tab-content">
+                <div class="card">
+                    <h2>📄 Generación de Informes</h2>
+                    
+                    <div class="alert alert-success">
+                        <strong>✅ Listo para Exportar:</strong> Los informes incluirán todas las fotografías y documentación del tratamiento.
+                    </div>
+
+                    <div class="export-section">
+                        <h3>Opciones de Exportación</h3>
+                        <div class="export-buttons">
+                            <button class="btn btn-danger" onclick="exportToPDF()">📄 Generar Informe PDF Completo</button>
+                            <button class="btn btn-info" onclick="exportToWord()">📝 Generar Documento Word</button>
+                            <button class="btn btn-warning" onclick="exportData()">💾 Exportar Datos JSON</button>
+                        </div>
+                    </div>
+
+                    <div class="loading" id="exportLoading">
+                        <div class="spinner"></div>
+                        <p>Generando documento... Por favor espere.</p>
+                    </div>
+
+                    <div style="margin-top: 30px;">
+                        <h3>Resumen del Tratamiento</h3>
+                        <div id="treatmentSummary">
+                            <!-- El resumen se generará dinámicamente -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Modal para añadir mediciones -->
+    <div id="measurementModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; width: 90%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            <h3>➕ Nueva Medición</h3>
+            <form id="measurementForm">
+                <div class="form-group">
+                    <label>Fecha y Hora:</label>
+                    <input type="datetime-local" id="measurementDateTime" required>
+                </div>
+                <div class="form-group">
+                    <label>pH:</label>
+                    <input type="number" id="measurementPh" step="0.1" min="0" max="14" required>
+                </div>
+                <div class="form-group">
+                    <label>Cloro Libre (ppm):</label>
+                    <input type="number" id="measurementFreeChlorine" step="0.1" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Cloro Combinado (ppm):</label>
+                    <input type="number" id="measurementCombinedChlorine" step="0.1" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Temperatura (°C):</label>
+                    <input type="number" id="measurementTemperature" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Observaciones:</label>
+                    <textarea id="measurementObservations" rows="2"></textarea>
+                </div>
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="btn btn-warning" onclick="closeMeasurementModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar Medición</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
-        // Global variables
-        let incidentData = {};
-        let protocolSteps = {};
-        let completedSteps = 0;
-        let photoStorage = {};
+        // Variables globales para almacenar datos
+        let treatmentData = {
+            incident: {},
+            protocol: {
+                steps: [],
+                photos: {}
+            },
+            measurements: [],
+            startDate: null,
+            endDate: null
+        };
 
-        // Initialize application
+        let completedSteps = 0;
+
+        // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
-            loadData();
+            loadStoredData();
             setupPhotoHandlers();
-            setupFormHandler();
-            
-            // Set current date/time as default
-            const now = new Date();
-            const dateString = now.toISOString().slice(0, 16);
-            document.getElementById('detectionDate').value = dateString;
+            updateProgress();
+            generateTreatmentSummary();
+            updateTimeline();
         });
 
-        // Tab switching
+        // Función para cambiar entre tabs
         function switchTab(tabName) {
-            // Hide all tabs
-            const tabs = document.querySelectorAll('.tab-content');
-            tabs.forEach(tab => tab.classList.remove('active'));
+            // Ocultar todos los contenidos
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
             
-            // Remove active class from all nav tabs
-            const navTabs = document.querySelectorAll('.nav-tab');
-            navTabs.forEach(nav => nav.classList.remove('active'));
+            // Remover clase active de todos los tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
             
-            // Show selected tab
+            // Mostrar el contenido seleccionado
             document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
             
-            // Update report if switching to report tab
-            if (tabName === 'report') {
-                generateReport();
+            // Marcar el tab como activo
+            event.target.classList.add('active');
+        }
+
+        // Manejo del formulario de incidencia
+        document.getElementById('incidentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            treatmentData.incident = {};
+            
+            for (let [key, value] of formData.entries()) {
+                treatmentData.incident[key] = value;
+            }
+            
+            treatmentData.startDate = new Date();
+            saveData();
+            
+            alert('✅ Incidencia registrada correctamente. Procede con el protocolo de tratamiento.');
+            switchTab('protocol');
+            document.querySelector('[onclick="switchTab(\'protocol\')"]').click();
+        });
+
+        // Configurar manejadores de fotos
+        function setupPhotoHandlers() {
+            // Fotos de incidencia
+            document.getElementById('incidentPhotos').addEventListener('change', function(e) {
+                handlePhotoUpload(e, 'incidentPhotoGrid');
+            });
+
+            // Fotos de pasos del protocolo
+            for (let i = 1; i <= 6; i++) {
+                document.getElementById(`step${i}Photos`).addEventListener('change', function(e) {
+                    handlePhotoUpload(e, `step${i}PhotoGrid`, `step${i}`);
+                });
             }
         }
 
-        // Setup form handler
-        function setupFormHandler() {
-            document.getElementById('incidentForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                saveIncidentData();
-                alert('✅ Incidencia registrada correctamente');
-                switchTab('protocol');
-                document.querySelector('[onclick="switchTab(\'protocol\')"]').classList.add('active');
+        // Manejo de subida de fotos
+        function handlePhotoUpload(event, gridId, stepId = null) {
+            const files = event.target.files;
+            const grid = document.getElementById(gridId);
+            
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const photoItem = document.createElement('div');
+                        photoItem.className = 'photo-item';
+                        
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = 'Foto del tratamiento';
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'delete-photo';
+                        deleteBtn.innerHTML = '×';
+                        deleteBtn.onclick = function() {
+                            photoItem.remove();
+                            if (stepId) {
+                                saveStepPhotos(stepId);
+                            }
+                        };
+                        
+                        photoItem.appendChild(img);
+                        photoItem.appendChild(deleteBtn);
+                        grid.appendChild(photoItem);
+                        
+                        // Guardar en datos del tratamiento
+                        if (stepId) {
+                            if (!treatmentData.protocol.photos[stepId]) {
+                                treatmentData.protocol.photos[stepId] = [];
+                            }
+                            treatmentData.protocol.photos[stepId].push(e.target.result);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
             });
         }
 
-        // Save incident data
-        function saveIncidentData() {
-            const formData = new FormData(document.getElementById('incidentForm'));
-            incidentData = Object.fromEntries(formData.entries());
-            incidentData.photos = photoStorage.incident || [];
-            saveData();
-            updateTracking('incident', 'Incidencia registrada', `Piscina: ${incidentData.poolName}`);
-        }
-
-        // Complete protocol step
+        // Completar paso del protocolo
         function completeStep(stepNumber) {
-            const stepData = {
-                completed: true,
-                date: document.getElementById(`step${stepNumber}Date`).value,
-                notes: document.getElementById(`step${stepNumber}Notes`).value,
-                photos: photoStorage[`step${stepNumber}`] || []
-            };
-
-            // Get additional data for specific steps
-            if (stepNumber === 3) {
-                stepData.chlorine = document.getElementById('step3Chlorine').value;
-                stepData.chlorineLevel = document.getElementById('step3ChlorineLevel').value;
-                stepData.ph = document.getElementById('step3Ph').value;
-            } else if (stepNumber === 4) {
-                stepData.duration = document.getElementById('step4Duration').value;
-            } else if (stepNumber === 6) {
-                stepData.chlorine = document.getElementById('step6Chlorine').value;
-                stepData.ph = document.getElementById('step6Ph').value;
-                stepData.ready = document.getElementById('step6Ready').value;
-            }
-
-            protocolSteps[stepNumber] = stepData;
-            
-            // Mark step as completed visually
             const stepElement = document.getElementById(`step${stepNumber}`);
+            let dateInput = document.getElementById(`step${stepNumber}Date`);
+            const notesInput = document.getElementById(`step${stepNumber}Notes`);
+            
+            // Para el paso 3, usar la fecha de inicio como referencia principal
+            if (stepNumber === 3) {
+                const startDateInput = document.getElementById('step3DateStart');
+                const endDateInput = document.getElementById('step3DateEnd');
+                const chlorineInput = document.getElementById('step3Chlorine');
+                const phInput = document.getElementById('step3Ph');
+                
+                if (!startDateInput.value) {
+                    alert('⚠️ Por favor, ingresa la fecha y hora de inicio del tratamiento de choque.');
+                    startDateInput.focus();
+                    return;
+                }
+                if (!endDateInput.value) {
+                    alert('⚠️ Por favor, ingresa la fecha y hora de finalización del tratamiento de choque.');
+                    endDateInput.focus();
+                    return;
+                }
+                if (!chlorineInput.value || chlorineInput.value < 20 || chlorineInput.value > 30) {
+                    alert('⚠️ Por favor, ingresa el nivel de cloro libre alcanzado (debe estar entre 20-30 ppm).');
+                    chlorineInput.focus();
+                    return;
+                }
+                if (!phInput.value || phInput.value < 7.2 || phInput.value > 7.5) {
+                    alert('⚠️ Por favor, ingresa el pH final (debe estar entre 7.2-7.5).');
+                    phInput.focus();
+                    return;
+                }
+                dateInput = startDateInput; // Usar fecha de inicio como referencia
+            } else if (!dateInput.value) {
+                alert('⚠️ Por favor, ingresa la fecha y hora de realización del paso.');
+                dateInput.focus();
+                return;
+            }
+            
             stepElement.classList.add('completed');
             
-            // Update progress
+            // Guardar datos del paso
+            const stepData = {
+                number: stepNumber,
+                completed: true,
+                date: dateInput.value,
+                notes: notesInput.value,
+                timestamp: new Date()
+            };
+            
+            // Si es el paso 3, guardar mediciones adicionales
+            if (stepNumber === 3) {
+                stepData.chlorine = document.getElementById('step3Chlorine').value;
+                stepData.ph = document.getElementById('step3Ph').value;
+                stepData.startDate = document.getElementById('step3DateStart').value;
+                stepData.endDate = document.getElementById('step3DateEnd').value;
+            }
+            
+            // Si es el paso 4, guardar sistemas activados
+            if (stepNumber === 4) {
+                stepData.systems = document.getElementById('step4Systems').value;
+            }
+            
+            // Si es el paso 6, guardar datos finales
+            if (stepNumber === 6) {
+                stepData.finalChlorine = document.getElementById('step6Chlorine').value;
+                stepData.finalPh = document.getElementById('step6Ph').value;
+                stepData.reopeningDate = document.getElementById('step6Reopening').value;
+                treatmentData.endDate = new Date();
+            }
+            
+            // Actualizar array de pasos
+            const existingStepIndex = treatmentData.protocol.steps.findIndex(s => s.number === stepNumber);
+            if (existingStepIndex >= 0) {
+                treatmentData.protocol.steps[existingStepIndex] = stepData;
+            } else {
+                treatmentData.protocol.steps.push(stepData);
+            }
+            
+            // Actualizar progreso
+            completedSteps = treatmentData.protocol.steps.filter(s => s.completed).length;
             updateProgress();
             
-            // Save data
+            // Guardar datos
             saveData();
             
-            // Update tracking
-            updateTracking('protocol', `Paso ${stepNumber} completado`, getStepTitle(stepNumber));
+            // Actualizar timeline
+            updateTimeline();
             
-            alert(`✅ Paso ${stepNumber} completado correctamente`);
+            alert(`✅ Paso ${stepNumber} completado correctamente.`);
         }
 
-        // Get step title
-        function getStepTitle(stepNumber) {
-            const titles = {
-                1: 'Limpieza General',
-                2: 'Contra-lavado de Filtros',
-                3: 'Tratamiento de Choque',
-                4: 'Hipercloración del Sistema',
-                5: 'Segundo Contra-lavado',
-                6: 'Normalización de Parámetros'
-            };
-            return titles[stepNumber];
-        }
-
-        // Update progress bar
+        // Actualizar barra de progreso
         function updateProgress() {
-            completedSteps = Object.keys(protocolSteps).length;
-            const percentage = (completedSteps / 6) * 100;
+            const progressFill = document.getElementById('protocolProgress');
+            const progressText = document.getElementById('progressText');
             
-            document.getElementById('protocolProgress').style.width = percentage + '%';
-            document.getElementById('progressText').textContent = completedSteps;
+            const percentage = (completedSteps / 6) * 100;
+            progressFill.style.width = percentage + '%';
+            progressText.textContent = completedSteps;
         }
 
-        // Update tracking timeline
-        function updateTracking(type, action, details) {
-            const timeline = document.getElementById('trackingTimeline');
-            const now = new Date();
+        // Añadir medición
+        function addMeasurement() {
+            document.getElementById('measurementModal').style.display = 'block';
+            document.getElementById('measurementDateTime').value = new Date().toISOString().slice(0, 16);
+        }
+
+        // Cerrar modal de medición
+        function closeMeasurementModal() {
+            document.getElementById('measurementModal').style.display = 'none';
+            document.getElementById('measurementForm').reset();
+        }
+
+        // Manejo del formulario de medición
+        document.getElementById('measurementForm').addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            const timelineItem = document.createElement('div');
-            timelineItem.className = 'timeline-item';
-            timelineItem.innerHTML = `
-                <h4>${action}</h4>
-                <p><strong>Fecha:</strong> ${now.toLocaleString('es-ES')}</p>
-                <p><strong>Detalles:</strong> ${details}</p>
-            `;
+            const measurement = {
+                datetime: document.getElementById('measurementDateTime').value,
+                ph: document.getElementById('measurementPh').value,
+                freeChlorine: document.getElementById('measurementFreeChlorine').value,
+                combinedChlorine: document.getElementById('measurementCombinedChlorine').value,
+                temperature: document.getElementById('measurementTemperature').value,
+                observations: document.getElementById('measurementObservations').value,
+                timestamp: new Date()
+            };
             
-            // Insert at the beginning (after info item)
-            if (timeline.children.length > 1) {
-                timeline.insertBefore(timelineItem, timeline.children[1]);
-            } else {
-                timeline.appendChild(timelineItem);
+            treatmentData.measurements.push(measurement);
+            saveData();
+            updateMeasurementTable();
+            updateTimeline();
+            closeMeasurementModal();
+            
+            alert('✅ Medición añadida correctamente.');
+        });
+
+        // Actualizar tabla de mediciones
+        function updateMeasurementTable() {
+            const tbody = document.getElementById('measurementTableBody');
+            tbody.innerHTML = '';
+            
+            treatmentData.measurements.forEach((measurement, index) => {
+                const row = tbody.insertRow();
+                
+                const date = new Date(measurement.datetime);
+                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${measurement.ph}</td>
+                    <td>${measurement.freeChlorine}</td>
+                    <td>${measurement.combinedChlorine || '-'}</td>
+                    <td>${measurement.temperature || '-'}</td>
+                    <td>${measurement.observations || '-'}</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteMeasurement(${index})" style="padding: 5px 10px; font-size: 0.8em;">🗑️</button>
+                    </td>
+                `;
+            });
+        }
+
+        // Eliminar medición
+        function deleteMeasurement(index) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta medición?')) {
+                treatmentData.measurements.splice(index, 1);
+                saveData();
+                updateMeasurementTable();
+                updateTimeline();
             }
         }
 
-        // Setup photo handlers
-        function setupPhotoHandlers() {
-            // Setup photo handlers for each section
-            const sections = ['incident', 'step1', 'step2', 'step3', 'step4', 'step5', 'step6'];
+        // Actualizar timeline
+        function updateTimeline() {
+            const timeline = document.getElementById('treatmentTimeline');
+            timeline.innerHTML = '';
             
-            sections.forEach(section => {
-                const input = document.getElementById(`${section}Photos`);
-                if (input) {
-                    input.addEventListener('change', function(e) {
-                        handlePhotoUpload(e, section);
+            // Combinar eventos del protocolo y mediciones
+            const events = [];
+            
+            // Eventos del protocolo
+            treatmentData.protocol.steps.forEach(step => {
+                if (step.completed) {
+                    events.push({
+                        type: 'protocol',
+                        date: new Date(step.date),
+                        title: `Paso ${step.number} completado`,
+                        description: step.notes || 'Sin observaciones adicionales'
                     });
                 }
             });
-        }
-
-        // Handle photo upload
-        function handlePhotoUpload(event, section) {
-            const files = Array.from(event.target.files);
             
-            if (!photoStorage[section]) {
-                photoStorage[section] = [];
-            }
-            
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const photoData = {
-                        id: Date.now() + Math.random(),
-                        name: file.name,
-                        data: e.target.result,
-                        timestamp: new Date().toISOString()
-                    };
-                    
-                    photoStorage[section].push(photoData);
-                    displayPhotos(section);
-                    saveData();
-                };
-                reader.readAsDataURL(file);
+            // Eventos de mediciones
+            treatmentData.measurements.forEach(measurement => {
+                events.push({
+                    type: 'measurement',
+                    date: new Date(measurement.datetime),
+                    title: 'Medición registrada',
+                    description: `pH: ${measurement.ph}, Cloro: ${measurement.freeChlorine} ppm`
+                });
             });
-        }
-
-        // Display photos in grid
-        function displayPhotos(section) {
-            const grid = document.getElementById(`${section}PhotoGrid`);
-            const photos = photoStorage[section] || [];
             
-            grid.innerHTML = '';
+            // Ordenar eventos por fecha
+            events.sort((a, b) => a.date - b.date);
             
-            photos.forEach(photo => {
-                const photoDiv = document.createElement('div');
-                photoDiv.className = 'photo-item';
-                photoDiv.innerHTML = `
-                    <img src="${photo.data}" alt="${photo.name}" title="${photo.name}">
-                    <button class="delete-photo" onclick="deletePhoto('${section}', '${photo.id}')" title="Eliminar foto">×</button>
+            // Generar timeline
+            events.forEach(event => {
+                const timelineItem = document.createElement('div');
+                timelineItem.className = 'timeline-item';
+                
+                const formattedDate = event.date.toLocaleDateString() + ' ' + event.date.toLocaleTimeString();
+                
+                timelineItem.innerHTML = `
+                    <h4>${event.title}</h4>
+                    <p><strong>Fecha:</strong> ${formattedDate}</p>
+                    <p>${event.description}</p>
                 `;
-                grid.appendChild(photoDiv);
+                
+                timeline.appendChild(timelineItem);
             });
         }
 
-        // Delete photo
-        function deletePhoto(section, photoId) {
-            if (confirm('¿Estás seguro de que quieres eliminar esta foto?')) {
-                photoStorage[section] = photoStorage[section].filter(photo => photo.id != photoId);
-                displayPhotos(section);
-                saveData();
-            }
-        }
-
-        // Generate report
-        function generateReport() {
-            const reportContent = document.getElementById('reportContent');
+        // Generar resumen del tratamiento
+        function generateTreatmentSummary() {
+            const summary = document.getElementById('treatmentSummary');
             
-            if (!incidentData.poolName) {
-                reportContent.innerHTML = `
-                    <div class="alert alert-warning">
-                        <strong>ℹ️ Información:</strong> Complete la incidencia y al menos un paso del protocolo para generar el informe.
+            const totalSteps = treatmentData.protocol.steps.length;
+            const totalMeasurements = treatmentData.measurements.length;
+            const totalPhotos = Object.values(treatmentData.protocol.photos).reduce((total, photos) => total + photos.length, 0);
+            
+            let duration = 'En curso';
+            if (treatmentData.startDate && treatmentData.endDate) {
+                const diff = new Date(treatmentData.endDate) - new Date(treatmentData.startDate);
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                duration = `${hours}h ${minutes}m`;
+            }
+            
+            summary.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div class="card" style="text-align: center; margin: 0;">
+                        <h4>Pasos Completados</h4>
+                        <p style="font-size: 2em; color: #27ae60; margin: 10px 0;">${completedSteps}/6</p>
                     </div>
-                `;
-                return;
-            }
-
-            let html = `
-                <div class="alert alert-success">
-                    <strong>✅ Informe generado correctamente</strong>
+                    <div class="card" style="text-align: center; margin: 0;">
+                        <h4>Mediciones</h4>
+                        <p style="font-size: 2em; color: #3498db; margin: 10px 0;">${totalMeasurements}</p>
+                    </div>
+                    <div class="card" style="text-align: center; margin: 0;">
+                        <h4>Fotografías</h4>
+                        <p style="font-size: 2em; color: #f39c12; margin: 10px 0;">${totalPhotos}</p>
+                    </div>
+                    <div class="card" style="text-align: center; margin: 0;">
+                        <h4>Duración</h4>
+                        <p style="font-size: 2em; color: #e74c3c; margin: 10px 0;">${duration}</p>
+                    </div>
                 </div>
                 
-                <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #ff6b6b; padding-bottom: 20px;">
-                        <h1 style="color: #ff6b6b; margin-bottom: 10px;">INFORME DE TRATAMIENTO</h1>
-                        <h2 style="color: #666;">Pseudomonas aeruginosa</h2>
-                        <p style="font-size: 1.1em; color: #888;">Protocolo de Actuación y Documentación</p>
+                <div style="margin-top: 20px;">
+                    <h4>Estado del Protocolo:</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${(completedSteps / 6) * 100}%"></div>
                     </div>
-
-                    <div style="margin-bottom: 25px;">
-                        <h3 style="color: #ff6b6b; border-bottom: 2px solid #ff6b6b; padding-bottom: 5px;">📋 DATOS DE LA INCIDENCIA</h3>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                            <tr><td style="padding: 8px; font-weight: bold; width: 30%;">Piscina:</td><td style="padding: 8px;">${incidentData.poolName}</td></tr>
-                            <tr><td style="padding: 8px; font-weight: bold;">Fecha de Detección:</td><td style="padding: 8px;">${new Date(incidentData.detectionDate).toLocaleString('es-ES')}</td></tr>
-                            <tr><td style="padding: 8px; font-weight: bold;">Responsable:</td><td style="padding: 8px;">${incidentData.responsible}</td></tr>
-                            <tr><td style="padding: 8px; font-weight: bold;">pH Inicial:</td><td style="padding: 8px;">${incidentData.initialPh || 'No especificado'}</td></tr>
-                            <tr><td style="padding: 8px; font-weight: bold;">Cloro Libre Inicial:</td><td style="padding: 8px;">${incidentData.initialFreeChlorine || 'No especificado'} ppm</td></tr>
-                            <tr><td style="padding: 8px; font-weight: bold;">Cloro Combinado Inicial:</td><td style="padding: 8px;">${incidentData.initialCombinedChlorine || 'No especificado'} ppm</td></tr>
-                            <tr><td style="padding: 8px; font-weight: bold;">Temperatura:</td><td style="padding: 8px;">${incidentData.temperature || 'No especificado'} °C</td></tr>
-                        </table>
-                        ${incidentData.observations ? `<p style="margin-top: 15px;"><strong>Observaciones:</strong> ${incidentData.observations}</p>` : ''}
-                    </div>
-
-                    <div style="margin-bottom: 25px;">
-                        <h3 style="color: #ff6b6b; border-bottom: 2px solid #ff6b6b; padding-bottom: 5px;">🔬 PROTOCOLO EJECUTADO</h3>
-                        <p style="margin: 15px 0;"><strong>Progreso:</strong> ${completedSteps} de 6 pasos completados (${Math.round((completedSteps/6)*100)}%)</p>
-            `;
-
-            // Add protocol steps
-            for (let i = 1; i <= 6; i++) {
-                const step = protocolSteps[i];
-                const stepTitle = getStepTitle(i);
-                
-                html += `
-                    <div style="margin: 20px 0; padding: 15px; background: ${step ? '#d4edda' : '#f8f9fa'}; border-radius: 8px; border-left: 5px solid ${step ? '#28a745' : '#dee2e6'};">
-                        <h4 style="margin-bottom: 10px;">${i}. ${stepTitle} ${step ? '✅' : '⏳'}</h4>
-                `;
-                
-                if (step) {
-                    html += `
-                        <p><strong>Fecha de realización:</strong> ${step.date ? new Date(step.date).toLocaleString('es-ES') : 'No especificada'}</p>
-                        ${step.chlorine ? `<p><strong>Cloro añadido:</strong> ${step.chlorine} kg</p>` : ''}
-                        ${step.chlorineLevel ? `<p><strong>Nivel de cloro alcanzado:</strong> ${step.chlorineLevel} ppm</p>` : ''}
-                        ${step.ph ? `<p><strong>pH:</strong> ${step.ph}</p>` : ''}
-                        ${step.duration ? `<p><strong>Duración:</strong> ${step.duration} minutos</p>` : ''}
-                        ${step.ready ? `<p><strong>Piscina lista:</strong> ${step.ready === 'si' ? 'Sí' : 'No'}</p>` : ''}
-                        ${step.notes ? `<p><strong>Observaciones:</strong> ${step.notes}</p>` : ''}
-                        ${step.photos && step.photos.length > 0 ? `<p><strong>Fotografías:</strong> ${step.photos.length} imagen(es) documentadas</p>` : ''}
-                    `;
-                } else {
-                    html += '<p style="color: #666; font-style: italic;">Paso pendiente de realizar</p>';
-                }
-                
-                html += '</div>';
-            }
-
-            html += `
-                    </div>
-
-                    <div style="margin-bottom: 25px;">
-                        <h3 style="color: #ff6b6b; border-bottom: 2px solid #ff6b6b; padding-bottom: 5px;">📊 RESUMEN</h3>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
-                            <p><strong>Estado del tratamiento:</strong> ${completedSteps === 6 ? '✅ Completado' : `🔄 En progreso (${completedSteps}/6 pasos)`}</p>
-                            <p><strong>Fecha del informe:</strong> ${new Date().toLocaleString('es-ES')}</p>
-                            <p><strong>Documentación fotográfica:</strong> ${getTotalPhotos()} imagen(es) total</p>
-                        </div>
-                    </div>
-
-                    <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #dee2e6; text-align: center; color: #666;">
-                        <p><em>Informe generado automáticamente por el Sistema de Gestión de Tratamientos Pseudomonas</em></p>
-                        <p style="font-size: 0.9em;">Protocolo basado en Manual Autocontrol Piscinas - Biolinea.com</p>
-                    </div>
+                    <p>${completedSteps === 6 ? '✅ Protocolo completado' : `⏳ ${6 - completedSteps} pasos pendientes`}</p>
                 </div>
             `;
-
-            reportContent.innerHTML = html;
         }
 
-        // Get total photos count
-        function getTotalPhotos() {
-            let total = 0;
-            Object.values(photoStorage).forEach(photos => {
-                total += photos.length;
-            });
-            return total;
-        }
-
-        // Export to PDF
-        function exportToPDF() {
+        // Exportar a PDF
+        async function exportToPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            // Add title
-            doc.setFontSize(20);
-            doc.setTextColor(255, 107, 107);
-            doc.text('INFORME PSEUDOMONAS', 20, 30);
+            showLoading();
             
-            doc.setFontSize(14);
-            doc.setTextColor(0, 0, 0);
-            doc.text(`Piscina: ${incidentData.poolName || 'No especificada'}`, 20, 50);
-            doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 20, 65);
-            doc.text(`Responsable: ${incidentData.responsible || 'No especificado'}`, 20, 80);
-            
-            // Add protocol progress
-            doc.text(`Progreso del protocolo: ${completedSteps}/6 pasos (${Math.round((completedSteps/6)*100)}%)`, 20, 100);
-            
-            let yPosition = 120;
-            
-            // Add completed steps
-            for (let i = 1; i <= 6; i++) {
-                const step = protocolSteps[i];
-                const stepTitle = getStepTitle(i);
+            try {
+                // Configuración inicial
+                let yPosition = 20;
+                const pageHeight = doc.internal.pageSize.height;
+                const margin = 20;
                 
-                if (yPosition > 250) {
-                    doc.addPage();
-                    yPosition = 20;
+                // Función para añadir nueva página si es necesario
+                function checkPageBreak(neededHeight) {
+                    if (yPosition + neededHeight > pageHeight - margin) {
+                        doc.addPage();
+                        yPosition = 20;
+                    }
                 }
+                
+                // Encabezado del documento
+                doc.setFontSize(22);
+                doc.setTextColor(44, 62, 80);
+                doc.text('MEMORIA TÉCNICA', 20, yPosition);
+                yPosition += 10;
+                doc.text('TRATAMIENTO DE PSEUDOMONAS AERUGINOSA', 20, yPosition);
+                yPosition += 15;
                 
                 doc.setFontSize(12);
-                doc.text(`${i}. ${stepTitle}: ${step ? 'COMPLETADO' : 'PENDIENTE'}`, 20, yPosition);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`Fecha de elaboración: ${new Date().toLocaleDateString()}`, 20, yPosition);
+                yPosition += 8;
+                doc.text(`Instalación: ${treatmentData.incident.poolName || 'No especificada'}`, 20, yPosition);
+                yPosition += 8;
+                doc.text(`Responsable: ${treatmentData.incident.responsible || 'No especificado'}`, 20, yPosition);
+                yPosition += 25;
                 
-                if (step && step.date) {
-                    yPosition += 15;
-                    doc.setFontSize(10);
-                    doc.text(`   Fecha: ${new Date(step.date).toLocaleDateString('es-ES')}`, 20, yPosition);
+                // RESUMEN EJECUTIVO
+                checkPageBreak(40);
+                doc.setFontSize(16);
+                doc.setTextColor(0, 0, 0);
+                doc.text('RESUMEN EJECUTIVO', 20, yPosition);
+                yPosition += 12;
+                
+                doc.setFontSize(11);
+                const detectionDate = treatmentData.incident.detectionDate ? new Date(treatmentData.incident.detectionDate).toLocaleDateString() : 'No especificada';
+                const completedSteps = treatmentData.protocol.steps.filter(s => s.completed).length;
+                const protocolStatus = completedSteps === 6 ? 'completado exitosamente' : `en curso (${completedSteps}/6 pasos completados)`;
+                
+                const executiveSummary = `El presente documento constituye la memoria técnica del tratamiento de desinfección aplicado contra Pseudomonas aeruginosa en la instalación ${treatmentData.incident.poolName || 'especificada'}. La detección de la bacteria patógena se produjo el ${detectionDate}, procediéndose inmediatamente al cierre de la instalación según normativa vigente.
+
+El protocolo de actuación ha sido ${protocolStatus}, siguiendo estrictamente las directrices establecidas para la eliminación de Pseudomonas aeruginosa. Todos los procedimientos han sido documentados detalladamente, incluyendo mediciones de parámetros fisicoquímicos y registros fotográficos del proceso.
+
+${completedSteps === 6 ? 'La instalación ha sido normalizada y se encuentra en condiciones óptimas para su reapertura al público.' : 'El tratamiento se encuentra en fase de ejecución, manteniéndose la instalación cerrada hasta completar todos los pasos del protocolo.'}`;
+                
+                const summaryLines = doc.splitTextToSize(executiveSummary, 170);
+                doc.text(summaryLines, 20, yPosition);
+                yPosition += summaryLines.length * 5 + 15;
+                
+                // 1. ANTECEDENTES Y DETECCIÓN
+                checkPageBreak(40);
+                doc.setFontSize(16);
+                doc.setTextColor(0, 0, 0);
+                doc.text('1. ANTECEDENTES Y DETECCIÓN', 20, yPosition);
+                yPosition += 12;
+                
+                doc.setFontSize(11);
+                const detectionText = `La presencia de Pseudomonas aeruginosa fue detectada el ${treatmentData.incident.detectionDate ? new Date(treatmentData.incident.detectionDate).toLocaleDateString() : 'fecha no especificada'} en la instalación ${treatmentData.incident.poolName || 'objeto del presente informe'}. 
+
+Según establece la normativa vigente, se procedió inmediatamente al cierre de la instalación al públicos y se inició el protocolo de desinfección correspondiente bajo la supervisión de ${treatmentData.incident.responsible || 'personal cualificado'}.
+
+Los parámetros fisicoquímicos registrados en el momento de la detección fueron los siguientes:
+- pH del agua: ${treatmentData.incident.initialPh || 'No medido'}
+- Cloro libre residual: ${treatmentData.incident.initialFreeChlorine || 'No medido'} ppm
+- Cloro combinado: ${treatmentData.incident.initialCombinedChlorine || 'No medido'} ppm
+- Temperatura del agua: ${treatmentData.incident.temperature || 'No medida'}°C
+
+${treatmentData.incident.observations ? `Observaciones adicionales del estado inicial: ${treatmentData.incident.observations}` : ''}`;
+                
+                const detectionLines = doc.splitTextToSize(detectionText, 170);
+                doc.text(detectionLines, 20, yPosition);
+                yPosition += detectionLines.length * 5 + 15;
+                
+                // 2. METODOLOGÍA Y PROCEDIMIENTOS APLICADOS
+                checkPageBreak(40);
+                doc.setFontSize(16);
+                doc.setTextColor(0, 0, 0);
+                doc.text('2. METODOLOGÍA Y PROCEDIMIENTOS APLICADOS', 20, yPosition);
+                yPosition += 12;
+                
+                doc.setFontSize(11);
+                const methodologyText = `El tratamiento aplicado sigue estrictamente el protocolo oficial establecido para la eliminación de Pseudomonas aeruginosa en instalaciones acuáticas. Este protocolo consta de seis etapas diferenciadas, cada una de ellas crítica para garantizar la completa desinfección de la instalación y la seguridad de los usuarios.
+
+La metodología implementada se basa en la aplicación de un tratamiento de choque con hipoclorito, manteniendo un valor CT (concentración × tiempo) de 3.600, seguido de procedimientos de limpieza y normalización que aseguran la eliminación total del patógeno tanto del agua como de todas las superficies y sistemas de la instalación.`;
+                
+                const methodologyLines = doc.splitTextToSize(methodologyText, 170);
+                doc.text(methodologyLines, 20, yPosition);
+                yPosition += methodologyLines.length * 5 + 15;
+                
+                // Descripción detallada de cada paso
+                const stepDescriptions = [
+                    {
+                        name: 'Limpieza General Completa',
+                        description: 'Se procedió a la limpieza exhaustiva de todas las superficies de la instalación, incluyendo fondo de piscina, rebosaderos perimetrales, skimmers y sistema de prefiltrado. Esta etapa es fundamental para eliminar la materia orgánica que pueda interferir en la eficacia del tratamiento de desinfección posterior.'
+                    },
+                    {
+                        name: 'Contra-lavado de Filtros',
+                        description: 'Se realizó un contra-lavado completo del sistema de filtración con el objetivo de eliminar los residuos acumulados y preparar el sistema para el tratamiento de choque. Este procedimiento garantiza la máxima eficiencia del sistema durante la fase de hipercloración.'
+                    },
+                    {
+                        name: 'Tratamiento de Choque - Hipercloración',
+                        description: 'Se elevó la concentración de cloro libre residual hasta 20-30 ppm, manteniendo este nivel durante un período de 2-3 horas para alcanzar el valor CT requerido de 3.600. Durante todo el proceso se controló que el pH se mantuviera en el rango óptimo de 7,2-7,5 para maximizar la eficacia del desinfectante.'
+                    },
+                    {
+                        name: 'Hipercloración del Sistema Completo',
+                        description: 'Se aseguró que el agua hiperclorada circulara por todo el sistema de tratamiento, incluyendo la activación de by-pass, cascadas, jets y soplantes cuando existían. Este procedimiento crítico garantiza que todas las partes del sistema, incluidas aquellas normalmente paradas, queden expuestas a la solución desinfectante.'
+                    },
+                    {
+                        name: 'Segundo Contra-lavado',
+                        description: 'Una vez transcurrido el tiempo de contacto necesario, se procedió a un nuevo contra-lavado del sistema de filtración para eliminar los residuos generados durante el tratamiento de choque y preparar la instalación para la fase de normalización.'
+                    },
+                    {
+                        name: 'Normalización y Puesta en Servicio',
+                        description: 'Finalmente, se procedió a la normalización de los parámetros del agua, reduciendo gradualmente la concentración de cloro libre hasta los valores habituales de operación (1-3 ppm) y verificando que todos los parámetros fisicoquímicos se encontraran dentro de los rangos establecidos antes de proceder a la reapertura de la instalación.'
+                    }
+                ];
+                
+                treatmentData.protocol.steps.forEach((step, index) => {
+                    const stepDesc = stepDescriptions[step.number - 1];
+                    
+                    checkPageBreak(50);
+                    
+                    doc.setFontSize(14);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`2.${step.number}. ${stepDesc.name}`, 20, yPosition);
+                    yPosition += 10;
+                    
+                    doc.setFontSize(11);
+                    doc.setFont(undefined, 'normal');
+                    const descLines = doc.splitTextToSize(stepDesc.description, 170);
+                    doc.text(descLines, 20, yPosition);
+                    yPosition += descLines.length * 5 + 8;
+                    
+                    if (step.completed) {
+                        doc.setFont(undefined, 'bold');
+                        doc.text(`Estado: COMPLETADO`, 25, yPosition);
+                        yPosition += 6;
+                        doc.setFont(undefined, 'normal');
+                        
+                        if (step.date) {
+                            doc.text(`Fecha de ejecución: ${new Date(step.date).toLocaleString()}`, 25, yPosition);
+                            yPosition += 6;
+                        }
+                        
+                        // Datos específicos del paso 3
+                        if (step.number === 3) {
+                            if (step.chlorine) {
+                                doc.text(`Concentración de cloro libre alcanzada: ${step.chlorine} ppm`, 25, yPosition);
+                                yPosition += 6;
+                            }
+                            if (step.ph) {
+                                doc.text(`pH mantenido durante el tratamiento: ${step.ph}`, 25, yPosition);
+                                yPosition += 6;
+                            }
+                            if (step.startDate && step.endDate) {
+                                const duration = (new Date(step.endDate) - new Date(step.startDate)) / (1000 * 60 * 60);
+                                doc.text(`Duración del tratamiento: ${duration.toFixed(1)} horas`, 25, yPosition);
+                                yPosition += 6;
+                            }
+                        }
+                        
+                        // Datos específicos del paso 6
+                        if (step.number === 6) {
+                            if (step.finalChlorine) {
+                                doc.text(`Cloro libre residual final: ${step.finalChlorine} ppm`, 25, yPosition);
+                                yPosition += 6;
+                            }
+                            if (step.finalPh) {
+                                doc.text(`pH final tras normalización: ${step.finalPh}`, 25, yPosition);
+                                yPosition += 6;
+                            }
+                            if (step.reopeningDate) {
+                                doc.text(`Fecha de reapertura autorizada: ${new Date(step.reopeningDate).toLocaleString()}`, 25, yPosition);
+                                yPosition += 6;
+                            }
+                        }
+                        
+                        if (step.notes) {
+                            doc.text('Observaciones técnicas:', 25, yPosition);
+                            yPosition += 6;
+                            const notesLines = doc.splitTextToSize(step.notes, 165);
+                            doc.text(notesLines, 25, yPosition);
+                            yPosition += notesLines.length * 5;
+                        }
+                    } else {
+                        doc.setFont(undefined, 'bold');
+                        doc.setTextColor(200, 0, 0);
+                        doc.text(`Estado: PENDIENTE DE EJECUCIÓN`, 25, yPosition);
+                        doc.setTextColor(0, 0, 0);
+                        yPosition += 6;
+                    }
+                    
+                    yPosition += 12;
+                });
+                
+                // 3. CONTROL Y SEGUIMIENTO ANALÍTICO
+                if (treatmentData.measurements.length > 0) {
+                    checkPageBreak(40);
+                    doc.setFontSize(16);
+                    doc.setTextColor(0, 0, 0);
+                    doc.text('3. CONTROL Y SEGUIMIENTO ANALÍTICO', 20, yPosition);
+                    yPosition += 12;
+                    
+                    doc.setFontSize(11);
+                    const monitoringText = `Durante el desarrollo del tratamiento se han realizado ${treatmentData.measurements.length} controles analíticos para verificar la eficacia del proceso y asegurar el cumplimiento de los parámetros establecidos. Estas mediciones han permitido realizar un seguimiento continuo de la evolución de los parámetros fisicoquímicos y ajustar el tratamiento según las necesidades detectadas.
+
+Los controles realizados han abarcado la medición de pH, concentración de cloro libre residual, cloro combinado y temperatura del agua, parámetros críticos para evaluar tanto la eficacia del desinfectante como las condiciones de seguridad para los usuarios una vez finalizado el tratamiento.`;
+                    
+                    const monitoringLines = doc.splitTextToSize(monitoringText, 170);
+                    doc.text(monitoringLines, 20, yPosition);
+                    yPosition += monitoringLines.length * 5 + 15;
                 }
                 
-                yPosition += 20;
+                // 4. CONCLUSIONES Y RESULTADOS
+                checkPageBreak(40);
+                doc.setFontSize(16);
+                doc.setTextColor(0, 0, 0);
+                doc.text('4. CONCLUSIONES Y RESULTADOS', 20, yPosition);
+                yPosition += 12;
+                
+                doc.setFontSize(11);
+                const completedSteps = treatmentData.protocol.steps.filter(s => s.completed).length;
+                const conclusionsText = completedSteps === 6 ? 
+                    `El tratamiento de desinfección contra Pseudomonas aeruginosa ha sido ejecutado completamente y con éxito, habiendo completado las seis etapas establecidas en el protocolo oficial. 
+
+Todos los procedimientos se han realizado conforme a la normativa vigente, manteniendo los parámetros fisicoquímicos dentro de los rangos establecidos y documentando exhaustivamente cada fase del proceso. La instalación ha sido normalizada y se encuentra en condiciones óptimas para su reapertura al público.
+
+Se ha verificado la eficacia del tratamiento mediante controles analíticos que confirman la eliminación del patógeno y la seguridad del agua para el uso por parte de los usuarios. El valor CT (concentración × tiempo) requerido de 3.600 ha sido alcanzado y mantenido durante el tiempo necesario.
+
+La documentación fotográfica adjunta proporciona evidencia visual del proceso realizado y del estado de la instalación en las diferentes fases del tratamiento.` :
+                    `El tratamiento de desinfección contra Pseudomonas aeruginosa se encuentra actualmente en fase de ejecución, habiendo completado ${completedSteps} de las 6 etapas establecidas en el protocolo oficial.
+
+La instalación permanece cerrada al público hasta la finalización completa del protocolo de actuación. Los procedimientos ejecutados hasta la fecha se han realizado conforme a la normativa vigente, manteniendo un registro detallado de todas las actuaciones y controles realizados.
+
+Una vez completadas las etapas restantes del protocolo, se procederá a la normalización de la instalación y se emitirá el informe final de conformidad para autorizar la reapertura al público.`;
+                
+                const conclusionsLines = doc.splitTextToSize(conclusionsText, 170);
+                doc.text(conclusionsLines, 20, yPosition);
+                yPosition += conclusionsLines.length * 5 + 20;
+                
+                // ANEXO: DATOS TÉCNICOS TABULADOS
+                doc.addPage();
+                yPosition = 20;
+                
+                doc.setFontSize(16);
+                doc.setTextColor(0, 0, 0);
+                doc.text('ANEXO - DATOS TÉCNICOS', 20, yPosition);
+                yPosition += 15;
+                
+                // Tabla de datos de incidencia
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('A.1. DATOS DE LA INCIDENCIA', 20, yPosition);
+                yPosition += 10;
+                
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                const incidentData = [
+                    ['Parámetro', 'Valor'],
+                    ['Piscina Afectada', treatmentData.incident.poolName || 'No especificada'],
+                    ['Fecha de Detección', treatmentData.incident.detectionDate ? new Date(treatmentData.incident.detectionDate).toLocaleString() : 'No especificada'],
+                    ['Responsable', treatmentData.incident.responsible || 'No especificado'],
+                    ['pH Inicial', treatmentData.incident.initialPh || 'No medido'],
+                    ['Cloro Libre Inicial (ppm)', treatmentData.incident.initialFreeChlorine || 'No medido'],
+                    ['Cloro Combinado Inicial (ppm)', treatmentData.incident.initialCombinedChlorine || 'No medido'],
+                    ['Temperatura (°C)', treatmentData.incident.temperature || 'No medida']
+                ];
+                
+                incidentData.forEach((row, index) => {
+                    checkPageBreak(8);
+                    if (index === 0) {
+                        doc.setFont(undefined, 'bold');
+                        doc.rect(20, yPosition - 3, 170, 8);
+                    } else {
+                        doc.setFont(undefined, 'normal');
+                    }
+                    doc.text(row[0], 25, yPosition);
+                    doc.text(row[1], 100, yPosition);
+                    if (index === 0) doc.setFont(undefined, 'normal');
+                    yPosition += 8;
+                });
+                
+                yPosition += 10;
+                
+                // Tabla de pasos del protocolo
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('A.2. ESTADO DEL PROTOCOLO', 20, yPosition);
+                yPosition += 10;
+                
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                const protocolHeaders = ['Paso', 'Descripción', 'Estado', 'Fecha'];
+                
+                // Encabezados
+                doc.setFont(undefined, 'bold');
+                doc.rect(20, yPosition - 3, 170, 8);
+                doc.text('Paso', 25, yPosition);
+                doc.text('Descripción', 45, yPosition);
+                doc.text('Estado', 120, yPosition);
+                doc.text('Fecha', 150, yPosition);
+                yPosition += 8;
+                
+                const stepNames = [
+                    'Limpieza General',
+                    'Contra-lavado',
+                    'Tratamiento Choque',
+                    'Hipercloración',
+                    'Segundo Contra-lavado',
+                    'Normalización'
+                ];
+                
+                for (let i = 1; i <= 6; i++) {
+                    checkPageBreak(8);
+                    const step = treatmentData.protocol.steps.find(s => s.number === i);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(i.toString(), 25, yPosition);
+                    doc.text(stepNames[i-1], 45, yPosition);
+                    doc.text(step && step.completed ? 'COMPLETADO' : 'PENDIENTE', 120, yPosition);
+                    doc.text(step && step.date ? new Date(step.date).toLocaleDateString() : '-', 150, yPosition);
+                    yPosition += 8;
+                }
+                
+                // Tabla de mediciones si existen
+                if (treatmentData.measurements.length > 0) {
+                    yPosition += 10;
+                    checkPageBreak(30);
+                    
+                    doc.setFontSize(14);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('A.3. REGISTRO DE MEDICIONES', 20, yPosition);
+                    yPosition += 10;
+                    
+                    doc.setFontSize(9);
+                    // Encabezados de mediciones
+                    doc.setFont(undefined, 'bold');
+                    doc.rect(20, yPosition - 3, 170, 8);
+                    doc.text('Fecha/Hora', 25, yPosition);
+                    doc.text('pH', 80, yPosition);
+                    doc.text('Cl Libre', 95, yPosition);
+                    doc.text('Cl Comb.', 120, yPosition);
+                    doc.text('Temp.', 145, yPosition);
+                    doc.text('Obs.', 165, yPosition);
+                    yPosition += 8;
+                    
+                    treatmentData.measurements.forEach((measurement, index) => {
+                        checkPageBreak(8);
+                        doc.setFont(undefined, 'normal');
+                        doc.text(new Date(measurement.datetime).toLocaleDateString(), 25, yPosition);
+                        doc.text(measurement.ph || '-', 80, yPosition);
+                        doc.text(measurement.freeChlorine || '-', 95, yPosition);
+                        doc.text(measurement.combinedChlorine || '-', 120, yPosition);
+                        doc.text(measurement.temperature || '-', 145, yPosition);
+                        doc.text(measurement.observations ? 'Sí' : '-', 165, yPosition);
+                        yPosition += 8;
+                    });
+                }
+                
+                // Añadir fotografías si existen
+                let hasPhotos = false;
+                for (const stepId in treatmentData.protocol.photos) {
+                    if (treatmentData.protocol.photos[stepId].length > 0) {
+                        hasPhotos = true;
+                        break;
+                    }
+                }
+                
+                if (hasPhotos) {
+                    doc.addPage();
+                    yPosition = 20;
+                    
+                    doc.setFontSize(16);
+                    doc.setTextColor(0, 0, 0);
+                    doc.text('ANEXO B - DOCUMENTACIÓN FOTOGRÁFICA', 20, yPosition);
+                    yPosition += 20;
+                    
+                    const photoStepNames = [
+                        'Limpieza General',
+                        'Contra-lavado',
+                        'Tratamiento Choque',
+                        'Hipercloración',
+                        'Segundo Contra-lavado',
+                        'Normalización'
+                    ];
+                    
+                    for (const stepId in treatmentData.protocol.photos) {
+                        const photos = treatmentData.protocol.photos[stepId];
+                        if (photos.length > 0) {
+                            checkPageBreak(30);
+                            
+                            doc.setFontSize(12);
+                            doc.setFont(undefined, 'bold');
+                            const stepNumber = parseInt(stepId.replace('step', ''));
+                            doc.text(`B.${stepNumber}. ${photoStepNames[stepNumber - 1]}:`, 25, yPosition);
+                            yPosition += 15;
+                            
+                            for (let i = 0; i < photos.length; i++) {
+                                checkPageBreak(80);
+                                
+                                try {
+                                    const imgWidth = 80;
+                                    const imgHeight = 60;
+                                    
+                                    doc.addImage(photos[i], 'JPEG', 25, yPosition, imgWidth, imgHeight);
+                                    yPosition += imgHeight + 10;
+                                } catch (error) {
+                                    console.warn('Error al añadir imagen:', error);
+                                    doc.setFontSize(10);
+                                    doc.text('(Imagen no disponible)', 25, yPosition);
+                                    yPosition += 10;
+                                }
+                            }
+                            yPosition += 10;
+                        }
+                    }
+                }
+                
+                // Pie de página
+                const totalPages = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text(`Página ${i} de ${totalPages}`, 20, pageHeight - 10);
+                    doc.text('Informe generado por Sistema Gestor Pseudomonas', 120, pageHeight - 10);
+                }
+                
+                // Guardar el PDF
+                const fileName = `Tratamiento_Pseudomonas_${treatmentData.incident.poolName || 'Piscina'}_${new Date().toISOString().split('T')[0]}.pdf`;
+                doc.save(fileName);
+                
+                hideLoading();
+                alert('✅ Informe PDF generado correctamente.');
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Error al generar PDF:', error);
+                alert('❌ Error al generar el PDF. Por favor, inténtalo de nuevo.');
             }
-            
-            // Save PDF
-            const filename = `Informe_Pseudomonas_${incidentData.poolName}_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(filename);
         }
 
-        // Export to Word (HTML format)
-        function exportToWord() {
-            const reportContent = document.getElementById('reportContent').innerHTML;
-            const htmlContent = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Informe Pseudomonas</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; }
-                        h1, h2, h3 { color: #ff6b6b; }
-                        table { border-collapse: collapse; width: 100%; }
-                        td { border: 1px solid #ddd; padding: 8px; }
-                        .completed { background-color: #d4edda; }
-                        .pending { background-color: #f8f9fa; }
-                    </style>
-                </head>
-                <body>
-                    ${reportContent}
-                </body>
-                </html>
-            `;
+        // Exportar a Word
+        async function exportToWord() {
+            showLoading();
             
-            const blob = new Blob([htmlContent], { type: 'application/msword' });
+            try {
+                const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
+                
+                const doc = new Document({
+                    sections: [{
+                        properties: {},
+                        children: [
+                            // Título
+                            new Paragraph({
+                                children: [
+                                    new TextRun({
+                                        text: "INFORME DE TRATAMIENTO PSEUDOMONAS",
+                                        bold: true,
+                                        size: 28,
+                                        color: "2C3E50"
+                                    })
+                                ],
+                                heading: HeadingLevel.TITLE,
+                                alignment: AlignmentType.CENTER
+                            }),
+                            
+                            new Paragraph({
+                                children: [
+                                    new TextRun({
+                                        text: `Generado el: ${new Date().toLocaleString()}`,
+                                        italics: true,
+                                        size: 20
+                                    })
+                                ],
+                                alignment: AlignmentType.CENTER
+                            }),
+                            
+                            new Paragraph({ text: "" }), // Espacio
+                            
+                            // Sección 1: Datos de la incidencia
+                            new Paragraph({
+                                children: [
+                                    new TextRun({
+                                        text: "1. DATOS DE LA INCIDENCIA",
+                                        bold: true,
+                                        size: 24
+                                    })
+                                ],
+                                heading: HeadingLevel.HEADING_1
+                            }),
+                            
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ text: "Piscina Afectada: ", bold: true }),
+                                    new TextRun({ text: treatmentData.incident.poolName || 'No especificada' })
+                                ]
+                            }),
+                            
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ text: "Fecha de Detección: ", bold: true }),
+                                    new TextRun({ text: treatmentData.incident.detectionDate ? new Date(treatmentData.incident.detectionDate).toLocaleString() : 'No especificada' })
+                                ]
+                            }),
+                            
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ text: "Responsable: ", bold: true }),
+                                    new TextRun({ text: treatmentData.incident.responsible || 'No especificado' })
+                                ]
+                            }),
+                            
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ text: "pH Inicial: ", bold: true }),
+                                    new TextRun({ text: treatmentData.incident.initialPh || 'No medido' })
+                                ]
+                            }),
+                            
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ text: "Cloro Libre Inicial (ppm): ", bold: true }),
+                                    new TextRun({ text: treatmentData.incident.initialFreeChlorine || 'No medido' })
+                                ]
+                            }),
+                            
+                            new Paragraph({ text: "" }), // Espacio
+                            
+                            // Sección 2: Protocolo
+                            new Paragraph({
+                                children: [
+                                    new TextRun({
+                                        text: "2. PROTOCOLO DE ACTUACIÓN",
+                                        bold: true,
+                                        size: 24
+                                    })
+                                ],
+                                heading: HeadingLevel.HEADING_1
+                            })
+                        ]
+                    }]
+                });
+                
+                // Añadir pasos del protocolo
+                const stepNames = [
+                    'Limpieza General Completa',
+                    'Contra-lavado de Filtros',
+                    'Tratamiento de Choque',
+                    'Hipercloración del Sistema',
+                    'Segundo Contra-lavado',
+                    'Normalización'
+                ];
+                
+                treatmentData.protocol.steps.forEach(step => {
+                    doc.addSection({
+                        children: [
+                            new Paragraph({
+                                children: [
+                                    new TextRun({
+                                        text: `Paso ${step.number}: ${stepNames[step.number - 1]}`,
+                                        bold: true,
+                                        size: 22
+                                    })
+                                ]
+                            }),
+                            
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ text: "Estado: ", bold: true }),
+                                    new TextRun({ 
+                                        text: step.completed ? '✓ Completado' : '⏳ Pendiente',
+                                        color: step.completed ? "27AE60" : "F39C12"
+                                    })
+                                ]
+                            }),
+                            
+                            ...(step.date ? [new Paragraph({
+                                children: [
+                                    new TextRun({ text: "Fecha: ", bold: true }),
+                                    new TextRun({ text: new Date(step.date).toLocaleString() })
+                                ]
+                            })] : []),
+                            
+                            ...(step.notes ? [new Paragraph({
+                                children: [
+                                    new TextRun({ text: "Observaciones: ", bold: true }),
+                                    new TextRun({ text: step.notes })
+                                ]
+                            })] : [])
+                        ]
+                    });
+                });
+                
+                // Generar y descargar el documento
+                const buffer = await Packer.toBuffer(doc);
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+                
+                const fileName = `Tratamiento_Pseudomonas_${treatmentData.incident.poolName || 'Piscina'}_${new Date().toISOString().split('T')[0]}.docx`;
+                saveAs(blob, fileName);
+                
+                hideLoading();
+                alert('✅ Documento Word generado correctamente.');
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Error al generar Word:', error);
+                alert('❌ Error al generar el documento Word. Por favor, inténtalo de nuevo.');
+            }
+        }
+
+        // Exportar datos JSON
+        function exportData() {
+            const dataToExport = {
+                ...treatmentData,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+            const fileName = `Datos_Tratamiento_Pseudomonas_${new Date().toISOString().split('T')[0]}.json`;
+            
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `Informe_Pseudomonas_${incidentData.poolName}_${new Date().toISOString().split('T')[0]}.doc`;
+            a.download = fileName;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            
+            alert('✅ Datos exportados correctamente en formato JSON.');
         }
 
-        // Share via WhatsApp
-        function shareWhatsApp() {
-            let message = `🦠 *INFORME PSEUDOMONAS*\n\n`;
-            message += `📋 *Piscina:* ${incidentData.poolName || 'No especificada'}\n`;
-            message += `📅 *Fecha:* ${new Date().toLocaleDateString('es-ES')}\n`;
-            message += `👤 *Responsable:* ${incidentData.responsible || 'No especificado'}\n\n`;
-            message += `🔬 *PROTOCOLO:* ${completedSteps}/6 pasos completados (${Math.round((completedSteps/6)*100)}%)\n\n`;
-            
-            for (let i = 1; i <= 6; i++) {
-                const step = protocolSteps[i];
-                const stepTitle = getStepTitle(i);
-                message += `${i}. ${stepTitle}: ${step ? '✅' : '⏳'}\n`;
-            }
-            
-            message += `\n📊 *Estado:* ${completedSteps === 6 ? 'TRATAMIENTO COMPLETADO ✅' : 'EN PROGRESO 🔄'}`;
-            message += `\n📸 *Fotos documentadas:* ${getTotalPhotos()}`;
-            
-            const encodedMessage = encodeURIComponent(message);
-            window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+        // Mostrar/ocultar indicador de carga
+        function showLoading() {
+            document.getElementById('exportLoading').classList.add('active');
         }
 
-        // Save data to localStorage equivalent (in-memory storage)
+        function hideLoading() {
+            document.getElementById('exportLoading').classList.remove('active');
+        }
+
+        // Guardar datos en localStorage
         function saveData() {
-            const data = {
-                incidentData,
-                protocolSteps,
-                completedSteps,
-                photoStorage,
-                lastSaved: new Date().toISOString()
-            };
-            
-            // Store in memory (simulating localStorage)
-            window.appData = data;
+            localStorage.setItem('pseudomonasTreatment', JSON.stringify(treatmentData));
         }
 
-        // Load data from storage
-        function loadData() {
-            const data = window.appData;
-            
-            if (data) {
-                incidentData = data.incidentData || {};
-                protocolSteps = data.protocolSteps || {};
-                completedSteps = data.completedSteps || 0;
-                photoStorage = data.photoStorage || {};
+        // Cargar datos guardados
+        function loadStoredData() {
+            const stored = localStorage.getItem('pseudomonasTreatment');
+            if (stored) {
+                treatmentData = JSON.parse(stored);
                 
-                // Restore form data if exists
-                if (incidentData.poolName) {
-                    Object.keys(incidentData).forEach(key => {
+                // Restaurar formulario de incidencia
+                if (treatmentData.incident) {
+                    Object.keys(treatmentData.incident).forEach(key => {
                         const element = document.getElementById(key);
                         if (element) {
-                            element.value = incidentData[key];
+                            element.value = treatmentData.incident[key];
                         }
                     });
                 }
                 
-                // Update UI
+                // Restaurar pasos completados
+                if (treatmentData.protocol.steps) {
+                    treatmentData.protocol.steps.forEach(step => {
+                        if (step.completed) {
+                            const stepElement = document.getElementById(`step${step.number}`);
+                            if (stepElement) {
+                                stepElement.classList.add('completed');
+                            }
+                            
+                            // Restaurar datos del paso
+                            const dateInput = document.getElementById(`step${step.number}Date`);
+                            const notesInput = document.getElementById(`step${step.number}Notes`);
+                            
+                            if (dateInput && step.date) dateInput.value = step.date;
+                            if (notesInput && step.notes) notesInput.value = step.notes;
+                            
+                            // Restaurar datos específicos
+                            if (step.number === 3) {
+                                if (step.chlorine) document.getElementById('step3Chlorine').value = step.chlorine;
+                                if (step.ph) document.getElementById('step3Ph').value = step.ph;
+                                if (step.startDate) document.getElementById('step3DateStart').value = step.startDate;
+                                if (step.endDate) document.getElementById('step3DateEnd').value = step.endDate;
+                            }
+                            
+                            if (step.number === 4 && step.systems) {
+                                document.getElementById('step4Systems').value = step.systems;
+                            }
+                            
+                            if (step.number === 6) {
+                                if (step.finalChlorine) document.getElementById('step6Chlorine').value = step.finalChlorine;
+                                if (step.finalPh) document.getElementById('step6Ph').value = step.finalPh;
+                                if (step.reopeningDate) document.getElementById('step6Reopening').value = step.reopeningDate;
+                            }
+                        }
+                    });
+                    
+                    completedSteps = treatmentData.protocol.steps.filter(s => s.completed).length;
+                }
+                
+                updateMeasurementTable();
                 updateProgress();
-                
-                // Display photos
-                Object.keys(photoStorage).forEach(section => {
-                    displayPhotos(section);
-                });
-                
-                // Mark completed steps
-                Object.keys(protocolSteps).forEach(stepNumber => {
-                    const stepElement = document.getElementById(`step${stepNumber}`);
-                    if (stepElement) {
-                        stepElement.classList.add('completed');
-                    }
-                });
+                updateTimeline();
+                generateTreatmentSummary();
             }
         }
 
-        // Auto-save every 30 seconds
-        setInterval(saveData, 30000);
+        // Función para limpiar todos los datos (para testing)
+        function clearAllData() {
+            if (confirm('⚠️ ¿Estás seguro de que quieres borrar todos los datos? Esta acción no se puede deshacer.')) {
+                localStorage.removeItem('pseudomonasTreatment');
+                location.reload();
+            }
+        }
+
+        // Función para guardar fotos de paso específico
+        function saveStepPhotos(stepId) {
+            const grid = document.getElementById(`${stepId}PhotoGrid`);
+            const photos = [];
+            
+            grid.querySelectorAll('img').forEach(img => {
+                photos.push(img.src);
+            });
+            
+            treatmentData.protocol.photos[stepId] = photos;
+            saveData();
+        }
+
+        // Actualizar resumen periódicamente
+        setInterval(() => {
+            generateTreatmentSummary();
+        }, 30000); // Cada 30 segundos
     </script>
 </body>
 </html>
