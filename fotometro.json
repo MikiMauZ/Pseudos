@@ -1,7 +1,20 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-02-19T11:49:10.366Z",
-  "fotometros": [],
+  "lastUpdated": "2026-02-19T13:48:41.918Z",
+  "fotometros": [
+    {
+      "id": "1771508921917cay5",
+      "nombre": "Lovivond MD 110",
+      "serie": "21/63305",
+      "param": "Multiparámetro",
+      "ubicacion": "TALLER WAVE",
+      "estado": "activo",
+      "calFecha": "2026-02-16",
+      "calLab": "NEXBIOLINEA",
+      "calCert": "FTC/26_046",
+      "notas": "CORRECTO\n\nVALIDA HASTA 16/02/27"
+    }
+  ],
   "verificaciones": [],
   "calibraciones": []
 }
