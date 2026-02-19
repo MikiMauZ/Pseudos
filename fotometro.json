@@ -1,7 +1,20 @@
 {
-“version”: “1.0”,
-“lastUpdated”: “”,
-“fotometros”: [],
-“verificaciones”: [],
-“calibraciones”: []
+  "version": "1.0",
+  "lastUpdated": "2026-02-19T11:46:11.872Z",
+  "fotometros": [
+    {
+      "id": "17715015718725upj",
+      "nombre": "Hola",
+      "serie": "Uiriir",
+      "param": "pH",
+      "ubicacion": "Nfnnfkfg",
+      "estado": "activo",
+      "calFecha": "2026-02-19",
+      "calLab": "Biolinea",
+      "calCert": "",
+      "notas": "Hfnnffkf"
+    }
+  ],
+  "verificaciones": [],
+  "calibraciones": []
 }
