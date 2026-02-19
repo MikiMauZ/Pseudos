@@ -25,27 +25,29 @@
     --radius: 12px;
   }
 
+/* Reset limpio — sin !important en selectores universales */
 *, *::before, *::after {
-box-sizing: border-box !important;
+box-sizing: border-box;
 margin: 0;
 padding: 0;
 -webkit-tap-highlight-color: transparent;
 }
 
+/* Solo aquí usamos !important: en html/body para ganar a editores externos */
 html {
 background: #0a0e1a !important;
-min-height: 100% !important;
+min-height: 100%;
 }
 
 body {
-font-family: var(–sans) !important;
+font-family: var(–sans);
 background: #0a0e1a !important;
-color: #e8edf5 !important;
+color: #e8edf5;
 min-height: 100vh;
-display: flex !important;
-flex-direction: column !important;
+display: flex;
+flex-direction: column;
 max-width: 480px;
-margin: 0 auto !important;
+margin: 0 auto;
 position: relative;
 overflow-x: hidden;
 }
@@ -794,10 +796,13 @@ let localData = { version:'1.0', lastUpdated:'', fotometros:[], verificaciones:[
 //  ESTADO DE SYNC
 // ============================================================
 function setSyncStatus(state, msg) {
-  const el = document.getElementById('syncStatus');
-  const icons = { ok:'🟢', loading:'🔄', error:'🔴', warn:'🟡', offline:'⚫' };
-  el.innerHTML = `${icons[state]||'⚪'} ${msg}`;
-  el.style.color = state==='ok'?'var(--accent2)':state==='error'?'var(--danger)':state==='warn'?'var(--warn)':'var(--text2)';
+  try {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    const icons = { ok:'🟢', loading:'🔄', error:'🔴', warn:'🟡', offline:'⚫' };
+    el.innerHTML = `${icons[state]||'⚪'} ${msg}`;
+    el.style.color = state==='ok'?'var(--accent2)':state==='error'?'var(--danger)':state==='warn'?'var(--warn)':'var(--text2)';
+  } catch(e) {}
 }
 
 // ============================================================
@@ -806,27 +811,52 @@ function setSyncStatus(state, msg) {
 async function loadFromGitHub() {
   setSyncStatus('loading', 'Cargando…');
   try {
-    // Usamos la API (no raw) para obtener también el SHA
     const headers = { 'Accept': 'application/vnd.github+json' };
     if (GH.token) headers['Authorization'] = `Bearer ${GH.token}`;
 
     const res = await fetch(GH.apiUrl, { headers });
+
+    if (res.status === 404) {
+      // Archivo no existe todavía — empezar con datos vacíos
+      setSyncStatus('warn', 'JSON nuevo');
+      return;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
     const meta = await res.json();
+    if (!meta.content) throw new Error('Respuesta sin content');
 
     ghFileSha = meta.sha;
-    const content = JSON.parse(atob(meta.content.replace(/\n/g,'')));
-    localData = { version:'1.0', lastUpdated:'', fotometros:[], verificaciones:[], calibraciones:[], ...content };
+    const raw = atob(meta.content.replace(/\n/g, ''));
+    const parsed = JSON.parse(raw);
+
+    // Merge seguro: si alguna clave falta, usa array vacío
+    localData = {
+      version: '1.0',
+      lastUpdated: '',
+      fotometros: [],
+      verificaciones: [],
+      calibraciones: [],
+      ...parsed
+    };
+
+    // Guardar copia local siempre
+    localStorage.setItem('fc_localData', JSON.stringify(localData));
     setSyncStatus('ok', 'GitHub ✓');
+
   } catch(e) {
-    // Fallback a localStorage si hay datos
-    const ls = localStorage.getItem('fc_localData');
-    if (ls) {
-      localData = JSON.parse(ls);
-      setSyncStatus('warn', 'Sin sync (local)');
-    } else {
-      setSyncStatus(GH.token ? 'error' : 'warn', GH.token ? 'Error GitHub' : 'Sin token →');
-    }
+    console.warn('GitHub load failed:', e.message);
+    // Fallback a copia local si existe
+    try {
+      const ls = localStorage.getItem('fc_localData');
+      if (ls) {
+        localData = JSON.parse(ls);
+        setSyncStatus('warn', 'Offline (local)');
+        return;
+      }
+    } catch(e2) {}
+    // Sin datos en ningún lado — empezar vacío
+    setSyncStatus(GH.token ? 'error' : 'warn', GH.token ? 'Error GitHub' : 'Sin token →');
   }
 }
 
@@ -956,31 +986,39 @@ function getDeviceStatus(foto) {
 //  INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
-  const d = new Date();
-  document.getElementById('headerDate').innerHTML =
-    d.toLocaleDateString('es-ES', {weekday:'short',day:'2-digit',month:'short'}).replace('.','')+'<br>'+
-    d.getFullYear();
+  // Fecha en header
+  try {
+    const d = new Date();
+    document.getElementById('headerDate').innerHTML =
+      d.toLocaleDateString('es-ES', {weekday:'short',day:'2-digit',month:'short'}).replace('.','')+'<br>'+
+      d.getFullYear();
+  } catch(e) {}
 
-  setSyncStatus('loading', 'Conectando…');
-
-  if (!GH.token) {
-    // No hay token: mostrar modal de configuración automáticamente
-    setSyncStatus('warn', 'Configura token →');
-    setTimeout(() => openSettings(), 600);
+  // Cargar datos — renderAll se ejecuta SIEMPRE aunque falle todo
+  try {
+    setSyncStatus('loading', 'Conectando…');
+    await loadFromGitHub();
+  } catch(e) {
+    console.error('Init load error:', e);
+    setSyncStatus('error', 'Error inicio');
+  } finally {
+    renderAll();
+    // Abrir config si no hay token (con delay para que el UI ya esté pintado)
+    if (!GH.token) {
+      setSyncStatus('warn', 'Sin token →');
+      setTimeout(() => { try { openSettings(); } catch(e) {} }, 800);
+    }
   }
-
-  await loadFromGitHub();
-  renderAll();
 });
 
 // ============================================================
 //  RENDER PRINCIPAL
 // ============================================================
 function renderAll() {
-  renderDashboard();
-  renderDevices();
-  renderVerifications();
-  renderTrazSelector();
+  try { renderDashboard(); } catch(e) { console.error('renderDashboard:', e); }
+  try { renderDevices(); } catch(e) { console.error('renderDevices:', e); }
+  try { renderVerifications(); } catch(e) { console.error('renderVerifications:', e); }
+  try { renderTrazSelector(); } catch(e) { console.error('renderTrazSelector:', e); }
 }
 
 // ============================================================
