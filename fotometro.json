@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-02-19T14:01:09.876Z",
+  "lastUpdated": "2026-02-19T14:02:54.699Z",
   "fotometros": [
     {
       "id": "1771508921917cay5",
@@ -25,25 +25,21 @@
       "calLab": "NEXBIOLINEA",
       "calCert": "TCL/26_028",
       "notas": "TURBIDIMETRO"
+    },
+    {
+      "id": "1771509774698z2rk",
+      "nombre": "TERMOMETRO",
+      "serie": "NS/NC",
+      "param": "Multiparámetro",
+      "ubicacion": "TALLER WAVE",
+      "estado": "activo",
+      "calFecha": "2026-02-16",
+      "calLab": "NEXBIOLINEA",
+      "calCert": "TC/26_023",
+      "notas": ""
     }
   ],
   "verificaciones": [
-    {
-      "id": "1771509525252nmte",
-      "fotoId": "1771509514484qr35",
-      "fecha": "2026-02-19",
-      "patron": "",
-      "tecnico": "",
-      "params": [
-        {
-          "nombre": "ParÃ¡metro 1",
-          "valor": "",
-          "status": "pass"
-        }
-      ],
-      "global": "pass",
-      "notas": ""
-    },
     {
       "id": "1771509302753vhqh",
       "fotoId": "1771508921917cay5",
@@ -69,6 +65,22 @@
       ],
       "global": "pass",
       "notas": "Todo correcto"
+    },
+    {
+      "id": "1771509525252nmte",
+      "fotoId": "1771509514484qr35",
+      "fecha": "2026-02-19",
+      "patron": "",
+      "tecnico": "",
+      "params": [
+        {
+          "nombre": "ParÃ¡metro 1",
+          "valor": "",
+          "status": "pass"
+        }
+      ],
+      "global": "pass",
+      "notas": ""
     }
   ],
   "calibraciones": []
