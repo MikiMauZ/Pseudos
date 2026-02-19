@@ -309,10 +309,40 @@
   .form-divider { height: 1px; background: var(--border); margin: 16px 0; }
 
   /* --- RESULT FIELDS --- */
-  .result-row {
-    display: grid; grid-template-columns: 1fr 1fr 60px;
-    gap: 8px; align-items: end; margin-bottom: 10px;
+  .param-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    position: relative;
   }
+  .param-block-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: end;
+  }
+  .param-block-values {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    align-items: end;
+  }
+  .param-remove {
+    width: 30px; height: 30px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text2);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    align-self: flex-end;
+    transition: all 0.15s;
+  }
+  .param-remove:hover { border-color: var(--danger); color: var(--danger); }
   .result-status {
     width: 36px; height: 36px;
     border-radius: 8px; border: 2px solid var(--border);
@@ -322,8 +352,8 @@
     background: var(--bg);
     align-self: flex-end;
   }
-  .result-status.pass { border-color: var(--accent2); background: rgba(0,255,157,0.1); }
-  .result-status.fail { border-color: var(--danger); background: rgba(255,71,87,0.1); }
+  .result-status.pass { border-color: var(--accent2); background: rgba(0,255,157,0.1); color: var(--accent2); }
+  .result-status.fail { border-color: var(--danger); background: rgba(255,71,87,0.1); color: var(--danger); }
 
   /* --- TRACEABILITY --- */
   .timeline { position: relative; }
@@ -565,12 +595,20 @@
     #trazContent { max-width: 800px; }
 
     /* MODALES — centrados y más anchos */
-    .modal-sheet {
-      border-radius: 16px;
-      max-width: 560px;
-      margin: auto;
-      max-height: 85vh;
+    .modal-overlay {
+      align-items: center;
     }
+    .modal {
+      border-radius: 16px !important;
+      max-width: 600px;
+      max-height: 88vh;
+      animation: modalFadeIn 0.2s ease !important;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(-16px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-handle { display: none; }
 
     /* FAB MENU — hacia arriba y a la derecha */
     .fab-menu {
@@ -655,10 +693,14 @@
 
   <!-- ===== PÁGINA: TRAZABILIDAD ===== -->
   <div class="page" id="page-trazabilidad">
-    <div class="form-group" style="margin-bottom:14px;">
-      <select class="form-input" id="trazSelect" onchange="renderTrazabilidad()">
-        <option value="">— Selecciona fotómetro —</option>
-      </select>
+    <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;">
+      <div class="form-group" style="flex:1;margin-bottom:0;">
+        <select class="form-input" id="trazSelect" onchange="renderTrazabilidad()">
+          <option value="">— Selecciona equipo —</option>
+          <option value="__all__">📋 Todos los equipos</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost" style="height:44px;padding:0 14px;white-space:nowrap;" onclick="printTrazabilidad()">🖨️ Imprimir</button>
     </div>
     <div id="trazContent"></div>
   </div>
@@ -705,35 +747,17 @@
 <div class="modal-overlay" id="modalFotometro">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">📟 <span id="mFotoTitle">Nuevo Fotómetro</span></div>
+    <div class="modal-title">📟 <span id="mFotoTitle">Nuevo Equipo</span></div>
     <input type="hidden" id="mFotoId">
-    <div class="form-group">
-      <label class="form-label">Nombre / Modelo</label>
-      <input type="text" class="form-input" id="mFotoNombre" placeholder="Ej: Hanna HI97701 #1">
-    </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Nº Serie</label>
-        <input type="text" class="form-input" id="mFotoSerie" placeholder="SN-12345">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Parámetro</label>
-        <select class="form-input" id="mFotoParam">
-          <option>Cloro libre</option>
-          <option>Cloro total</option>
-          <option>Cloro libre + Total</option>
-          <option>pH</option>
-          <option>Turbidez</option>
-          <option>Amonio</option>
-          <option>Dióxido de cloro</option>
-          <option>Multiparámetro</option>
+        <label class="form-label">Tipo de equipo</label>
+        <select class="form-input" id="mFotoTipo">
+          <option value="fotometro">📟 Fotómetro</option>
+          <option value="turbidimetro">💧 Turbidímetro</option>
+          <option value="termometro">🌡️ Termómetro</option>
+          <option value="otro">🔧 Otro</option>
         </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Ubicación</label>
-        <input type="text" class="form-input" id="mFotoUbic" placeholder="Depósito 1, ACS...">
       </div>
       <div class="form-group">
         <label class="form-label">Estado</label>
@@ -742,6 +766,34 @@
           <option value="baja">Baja</option>
         </select>
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre / Modelo</label>
+      <input type="text" class="form-input" id="mFotoNombre" placeholder="Ej: Lovibond MD 110, Hanna HI98703...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nº Serie</label>
+        <input type="text" class="form-input" id="mFotoSerie" placeholder="SN-12345">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parámetro principal</label>
+        <select class="form-input" id="mFotoParam">
+          <option>Cloro libre</option>
+          <option>Cloro total</option>
+          <option>Cloro libre + Total</option>
+          <option>pH</option>
+          <option>Turbidez</option>
+          <option>Temperatura</option>
+          <option>Amonio</option>
+          <option>Dióxido de cloro</option>
+          <option>Multiparámetro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ubicación</label>
+      <input type="text" class="form-input" id="mFotoUbic" placeholder="Depósito 1, ACS, Piscina...">
     </div>
     <div class="form-divider"></div>
     <div class="section-label" style="margin-top:0">Calibración anual</div>
@@ -777,7 +829,7 @@
     <div class="modal-title">🧪 Nueva Verificación Mensual</div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Fotómetro</label>
+        <label class="form-label">Equipo</label>
         <select class="form-input" id="mVerifFoto"></select>
       </div>
       <div class="form-group">
@@ -785,38 +837,36 @@
         <input type="date" class="form-input" id="mVerifFecha">
       </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Referencia patrón / Kit CAL CHECK</label>
-      <input type="text" class="form-input" id="mVerifPatron" placeholder="Ej: HI97701-11, lote 24B03">
-    </div>
     <div class="form-divider"></div>
-    <div class="section-label" style="margin-top:0">Resultados por parámetro</div>
-    <div id="verifParams">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div class="section-label" style="margin:0">Parámetros verificados</div>
+      <button class="btn btn-ghost" style="padding:4px 12px;font-size:12px;" onclick="addParamRow()">+ Añadir</button>
+    </div>
+    <!-- datalist para sugerencias de nombre -->
+    <datalist id="paramSuggestions">
+      <option value="Cloro libre">
+      <option value="Cloro total">
+      <option value="pH">
+      <option value="Turbidez">
+      <option value="Temperatura">
+      <option value="Amonio">
+      <option value="Dióxido de cloro">
+      <option value="Conductividad">
+    </datalist>
+    <div id="verifParams"></div>
+    <div class="form-divider"></div>
+    <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Parámetro 1</label>
-        <div class="result-row">
-          <div>
-            <label class="form-label">Nombre</label>
-            <input type="text" class="form-input param-name" placeholder="Ej: Cloro libre">
-          </div>
-          <div>
-            <label class="form-label">Valor patrón → obtenido</label>
-            <input type="text" class="form-input param-val" placeholder="1.00 → 1.02 mg/L">
-          </div>
-          <div>
-            <label class="form-label">OK</label>
-            <div class="result-status" onclick="toggleStatus(this)" title="Toca para cambiar">—</div>
-          </div>
-        </div>
+        <label class="form-label">Técnico</label>
+        <input type="text" class="form-input" id="mVerifTecnico" placeholder="Nombre del técnico">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Resultado global</label>
+        <div id="globalStatus" style="padding:11px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-size:13px;color:var(--text2);">Auto (según parámetros)</div>
       </div>
     </div>
-    <button class="btn btn-ghost" style="width:100%;margin-bottom:10px;" onclick="addParamRow()">+ Parámetro</button>
     <div class="form-group">
-      <label class="form-label">Técnico</label>
-      <input type="text" class="form-input" id="mVerifTecnico" placeholder="Nombre del técnico">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Observaciones</label>
+      <label class="form-label">Observaciones / Acciones correctoras</label>
       <textarea class="form-input" id="mVerifNotas" placeholder="Notas, acciones correctoras..."></textarea>
     </div>
     <div style="display:flex;gap:10px;margin-top:4px;">
@@ -996,7 +1046,8 @@ async function loadFromGitHub() {
     if (!meta.content) throw new Error('Respuesta sin content');
 
     ghFileSha = meta.sha;
-    const raw = atob(meta.content.replace(/\n/g, ''));
+    // decodeURIComponent(escape(...)) convierte bytes UTF-8 a string correctamente
+    const raw = decodeURIComponent(escape(atob(meta.content.replace(/\n/g, ''))));
     const parsed = JSON.parse(raw);
 
     // Merge seguro: si alguna clave falta, usa array vacío
@@ -1265,13 +1316,13 @@ function renderDevices() {
 function renderDeviceCard(foto, compact) {
   const s = getDeviceStatus(foto);
   const statusLabels = {ok:'CORRECTO', warn:'ATENCIÓN', danger:'VENCIDO'};
-  const verifs = getVerifs().filter(v => v.fotoId === foto.id);
-  const lastV = verifs.sort((a,b)=>a.fecha<b.fecha?1:-1)[0];
+  const tipoIcons = { fotometro:'📟', turbidimetro:'💧', termometro:'🌡️', otro:'🔧' };
+  const icon = tipoIcons[foto.tipo] || '📟';
 
   return `<div class="card ${s.overall}" onclick="showDetalle('${foto.id}')">
     <div class="card-header">
       <div>
-        <div class="card-title">${foto.nombre}</div>
+        <div class="card-title">${icon} ${foto.nombre}</div>
         <div style="margin-top:4px;font-size:12px;color:var(--text2)">${foto.param} · ${foto.ubicacion}</div>
       </div>
       <div class="card-serial">${foto.serie}</div>
@@ -1322,25 +1373,39 @@ function renderVerifications() {
   const html = filtered.map(v => {
     const foto = fotos.find(f => f.id === v.fotoId);
     const passFail = v.global === 'pass';
+    // Soporte para params nuevo (patron/obtenido separados) y legacy (valor)
+    const paramsHtml = v.params && v.params.length ? `<div style="display:flex;flex-direction:column;gap:4px;margin-top:8px;">
+      ${v.params.map(p => {
+        const valorDisplay = p.patron && p.obtenido
+          ? `<span style="font-family:var(--mono);font-size:11px">Patrón: ${p.patron}</span> <span style="color:var(--text2)">→</span> <span style="font-family:var(--mono);font-size:11px">Obtenido: ${p.obtenido}</span>`
+          : `<span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${p.valor||''}</span>`;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;background:var(--bg);padding:6px 10px;border-radius:6px;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <span style="font-weight:600">${p.nombre}</span>
+            ${p.kit ? `<span style="color:var(--text2);margin-left:6px;font-size:11px">[${p.kit}]</span>` : ''}
+            <div style="margin-top:2px">${valorDisplay}</div>
+          </div>
+          <span style="color:${p.status==='pass'?'var(--accent2)':'var(--danger)'};font-size:16px;flex-shrink:0">${p.status==='pass'?'✓':'✗'}</span>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+
     return `<div class="card ${passFail?'ok':'danger'}">
       <div class="card-header">
         <div>
-          <div class="card-title">${foto?.nombre ?? 'Fotómetro eliminado'}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:3px">Patrón: ${v.patron || '—'} · Técnico: ${v.tecnico || '—'}</div>
+          <div class="card-title">${foto?.nombre ?? 'Equipo eliminado'}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px">Técnico: ${v.tecnico || '—'}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
           <span class="badge ${passFail?'ok':'danger'}">${passFail?'PASA':'FALLA'}</span>
           <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fmtDate(v.fecha)}</span>
         </div>
       </div>
-      ${v.params && v.params.length ? `<div style="display:flex;flex-direction:column;gap:4px;">
-        ${v.params.map(p=>`<div style="display:flex;justify-content:space-between;font-size:12px;background:var(--bg);padding:6px 10px;border-radius:6px;">
-          <span>${p.nombre}</span>
-          <span style="color:var(--text2);font-family:var(--mono)">${p.valor}</span>
-          <span style="color:${p.status==='pass'?'var(--accent2)':'var(--danger)'}">${p.status==='pass'?'✓':'✗'}</span>
-        </div>`).join('')}
-      </div>` : ''}
-      ${v.notas ? `<div style="margin-top:8px;font-size:12px;color:var(--text2);padding:6px 10px;background:var(--bg);border-radius:6px;">${v.notas}</div>` : ''}
+      ${paramsHtml}
+      ${v.notas ? `<div style="margin-top:8px;font-size:12px;color:var(--text2);padding:6px 10px;background:var(--bg);border-radius:6px;">💬 ${v.notas}</div>` : ''}
+      <div style="margin-top:10px;display:flex;justify-content:flex-end;">
+        <button class="btn btn-ghost" style="padding:4px 12px;font-size:12px;" onclick="printVerif('${v.id}')">🖨️ Imprimir</button>
+      </div>
     </div>`;
   }).join('');
   document.getElementById('verifList').innerHTML = html;
@@ -1351,39 +1416,78 @@ function renderVerifications() {
 // ============================================================
 function renderTrazSelector() {
   const fotos = getFotos();
+  const tipoIcons = { fotometro:'📟', turbidimetro:'💧', termometro:'🌡️', otro:'🔧' };
   const sel = document.getElementById('trazSelect');
-  sel.innerHTML = '<option value="">— Selecciona fotómetro —</option>' +
-    fotos.map(f => `<option value="${f.id}">${f.nombre} (${f.serie})</option>`).join('');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Selecciona equipo —</option><option value="__all__">📋 Todos los equipos</option>' +
+    fotos.map(f => `<option value="${f.id}" ${f.id===current?'selected':''}>${tipoIcons[f.tipo]||'📟'} ${f.nombre} (${f.serie})</option>`).join('');
 }
 
 function renderTrazabilidad() {
   const fotoId = document.getElementById('trazSelect').value;
   if (!fotoId) { document.getElementById('trazContent').innerHTML = ''; return; }
 
+  if (fotoId === '__all__') {
+    renderTrazabilidadAll();
+    return;
+  }
+
   const verifs = getVerifs().filter(v => v.fotoId === fotoId).sort((a,b) => a.fecha<b.fecha?1:-1);
   const cals = getCals().filter(c => c.fotoId === fotoId).sort((a,b) => a.fecha<b.fecha?1:-1);
   const foto = getFotos().find(f => f.id === fotoId);
 
   const events = [];
-
-  // Cal inicial del fotómetro
   if (foto?.calFecha) {
     events.push({ tipo: 'calibracion', fecha: foto.calFecha, titulo: 'Calibración anual (inicial)', lab: foto.calLab, cert: foto.calCert, notas: foto.notas });
   }
-
   cals.forEach(c => events.push({ tipo: 'calibracion', fecha: c.fecha, titulo: 'Calibración anual', lab: c.lab, cert: c.cert, notas: c.notas, resultado: c.resultado, vigencia: c.vigencia }));
   verifs.forEach(v => events.push({ tipo: v.global === 'fail' ? 'verificacion_fail' : 'verificacion_ok', fecha: v.fecha, titulo: `Verificación mensual — ${v.global==='pass'?'PASA':'FALLA'}`, patron: v.patron, tecnico: v.tecnico, params: v.params, notas: v.notas }));
-
   events.sort((a,b) => a.fecha < b.fecha ? 1 : -1);
 
   if (events.length === 0) {
-    document.getElementById('trazContent').innerHTML = '<div class="empty"><div class="empty-icon">📈</div><h3>Sin registros</h3><p>No hay historial para este fotómetro</p></div>';
+    document.getElementById('trazContent').innerHTML = '<div class="empty"><div class="empty-icon">📈</div><h3>Sin registros</h3><p>No hay historial para este equipo</p></div>';
     return;
   }
 
-  const icons = { calibracion: '🔧', verificacion_ok: '✅', verificacion_fail: '❌' };
+  document.getElementById('trazContent').innerHTML = buildTimeline(events);
+}
 
-  const html = '<div class="timeline">' + events.map(e => `
+function renderTrazabilidadAll() {
+  const fotos = getFotos();
+  const tipoIcons = { fotometro:'📟', turbidimetro:'💧', termometro:'🌡️', otro:'🔧' };
+
+  if (fotos.length === 0) {
+    document.getElementById('trazContent').innerHTML = '<div class="empty"><div class="empty-icon">📋</div><h3>Sin equipos</h3></div>';
+    return;
+  }
+
+  const html = fotos.map(foto => {
+    const verifs = getVerifs().filter(v => v.fotoId === foto.id).sort((a,b) => a.fecha<b.fecha?1:-1);
+    const cals = getCals().filter(c => c.fotoId === foto.id).sort((a,b) => a.fecha<b.fecha?1:-1);
+    const events = [];
+    if (foto.calFecha) events.push({ tipo: 'calibracion', fecha: foto.calFecha, titulo: 'Calibración anual (inicial)', lab: foto.calLab, cert: foto.calCert });
+    cals.forEach(c => events.push({ tipo: 'calibracion', fecha: c.fecha, titulo: 'Calibración anual', lab: c.lab, cert: c.cert, resultado: c.resultado, vigencia: c.vigencia }));
+    verifs.forEach(v => events.push({ tipo: v.global==='fail'?'verificacion_fail':'verificacion_ok', fecha: v.fecha, titulo: `Verificación — ${v.global==='pass'?'PASA':'FALLA'}`, patron: v.patron, tecnico: v.tecnico, params: v.params, notas: v.notas }));
+    events.sort((a,b) => a.fecha<b.fecha?1:-1);
+
+    return `<div class="card" style="margin-bottom:20px;">
+      <div class="card-header" style="margin-bottom:12px;">
+        <div>
+          <div class="card-title">${tipoIcons[foto.tipo]||'📟'} ${foto.nombre}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${foto.param} · ${foto.ubicacion}</div>
+        </div>
+        <span class="card-serial">${foto.serie}</span>
+      </div>
+      ${events.length ? buildTimeline(events) : '<div style="font-size:13px;color:var(--text2);padding:8px 0">Sin registros</div>'}
+    </div>`;
+  }).join('');
+
+  document.getElementById('trazContent').innerHTML = html;
+}
+
+function buildTimeline(events) {
+  const icons = { calibracion:'🔧', verificacion_ok:'✅', verificacion_fail:'❌' };
+  return '<div class="timeline">' + events.map(e => `
     <div class="timeline-item">
       <div class="timeline-dot ${e.tipo}">${icons[e.tipo]}</div>
       <div class="timeline-body">
@@ -1392,14 +1496,17 @@ function renderTrazabilidad() {
         ${e.lab ? `<div class="timeline-note">🏢 ${e.lab}${e.cert?` · Cert: ${e.cert}`:''}</div>` : ''}
         ${e.resultado ? `<div class="timeline-note">📊 ${e.resultado}</div>` : ''}
         ${e.vigencia ? `<div class="timeline-note">📅 Válida hasta: ${fmtDate(e.vigencia)}</div>` : ''}
-        ${e.patron ? `<div class="timeline-note">🧪 Patrón: ${e.patron} · Técnico: ${e.tecnico}</div>` : ''}
-        ${e.params && e.params.length ? `<div style="margin-top:4px;display:flex;flex-direction:column;gap:3px;">${e.params.map(p=>`<div style="font-size:12px;color:var(--text2)">• ${p.nombre}: <span style="font-family:var(--mono)">${p.valor}</span> <span style="color:${p.status==='pass'?'var(--accent2)':'var(--danger)'}">${p.status==='pass'?'✓':'✗'}</span></div>`).join('')}</div>` : ''}
-        ${e.notas ? `<div class="timeline-note" style="font-style:italic">${e.notas}</div>` : ''}
+        ${e.tecnico ? `<div class="timeline-note">👤 Técnico: ${e.tecnico}</div>` : ''}
+        ${e.params && e.params.length ? `<div style="margin-top:4px;display:flex;flex-direction:column;gap:2px;">
+          ${e.params.map(p => {
+            const v = p.patron && p.obtenido ? `${p.patron} → ${p.obtenido}` : (p.valor||'');
+            return `<div style="font-size:12px;color:var(--text2)">• ${p.nombre}${p.kit?` [${p.kit}]`:''}: <span style="font-family:var(--mono)">${v}</span> <span style="color:${p.status==='pass'?'var(--accent2)':'var(--danger)'}">${p.status==='pass'?'✓':'✗'}</span></div>`;
+          }).join('')}
+        </div>` : ''}
+        ${e.notas ? `<div class="timeline-note" style="font-style:italic">💬 ${e.notas}</div>` : ''}
       </div>
     </div>
   `).join('') + '</div>';
-
-  document.getElementById('trazContent').innerHTML = html;
 }
 
 // ============================================================
@@ -1423,7 +1530,8 @@ function openFotometro(id = null) {
   document.getElementById('mFotoId').value = id || '';
   if (id) {
     const f = getFotos().find(x => x.id === id);
-    document.getElementById('mFotoTitle').textContent = 'Editar Fotómetro';
+    document.getElementById('mFotoTitle').textContent = 'Editar Equipo';
+    document.getElementById('mFotoTipo').value = f.tipo || 'fotometro';
     document.getElementById('mFotoNombre').value = f.nombre;
     document.getElementById('mFotoSerie').value = f.serie;
     document.getElementById('mFotoParam').value = f.param;
@@ -1434,7 +1542,8 @@ function openFotometro(id = null) {
     document.getElementById('mFotoCert').value = f.calCert || '';
     document.getElementById('mFotoNotas').value = f.notas || '';
   } else {
-    document.getElementById('mFotoTitle').textContent = 'Nuevo Fotómetro';
+    document.getElementById('mFotoTitle').textContent = 'Nuevo Equipo';
+    document.getElementById('mFotoTipo').value = 'fotometro';
     document.getElementById('mFotoNombre').value = '';
     document.getElementById('mFotoSerie').value = '';
     document.getElementById('mFotoUbic').value = '';
@@ -1450,8 +1559,11 @@ function saveFotometro() {
   const id = document.getElementById('mFotoId').value;
   const nombre = document.getElementById('mFotoNombre').value.trim();
   if (!nombre) { alert('El nombre es obligatorio'); return; }
+  const tipoIcons = { fotometro:'📟', turbidimetro:'💧', termometro:'🌡️', otro:'🔧' };
+  const tipo = document.getElementById('mFotoTipo').value;
   const obj = {
     id: id || DB.id(),
+    tipo,
     nombre,
     serie: document.getElementById('mFotoSerie').value.trim(),
     param: document.getElementById('mFotoParam').value,
@@ -1475,39 +1587,58 @@ function saveFotometro() {
   renderAll();
 }
 
+function makeParamBlock(n = 1) {
+  return `<div class="param-block" data-param>
+    <div class="param-block-header">
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Parámetro</label>
+        <input list="paramSuggestions" class="form-input param-name" placeholder="Cloro libre, pH..." value="">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Kit / Referencia patrón</label>
+        <input type="text" class="form-input param-kit" placeholder="HI97701-11, lote 24B03...">
+      </div>
+      <button class="param-remove" onclick="removeParamBlock(this)" title="Eliminar parámetro">✕</button>
+    </div>
+    <div class="param-block-values">
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Valor patrón</label>
+        <input type="text" class="form-input param-patron" placeholder="1.00 mg/L">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Valor obtenido</label>
+        <input type="text" class="form-input param-obtenido" placeholder="1.02 mg/L">
+      </div>
+      <div>
+        <label class="form-label">OK</label>
+        <div class="result-status" onclick="toggleStatus(this)" title="Toca para cambiar">—</div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function openVerif(fotoId = null) {
   const fotos = getFotos().filter(f => f.estado === 'activo');
+  const tipoIcons = { fotometro:'📟', turbidimetro:'💧', termometro:'🌡️', otro:'🔧' };
   const sel = document.getElementById('mVerifFoto');
-  sel.innerHTML = fotos.map(f => `<option value="${f.id}" ${f.id===fotoId?'selected':''}>${f.nombre}</option>`).join('');
+  sel.innerHTML = fotos.map(f => `<option value="${f.id}" ${f.id===fotoId?'selected':''}>${tipoIcons[f.tipo]||'📟'} ${f.nombre}</option>`).join('');
   document.getElementById('mVerifFecha').value = today();
-  document.getElementById('mVerifPatron').value = '';
   document.getElementById('mVerifTecnico').value = '';
   document.getElementById('mVerifNotas').value = '';
-  // Reset params
-  document.getElementById('verifParams').innerHTML = `
-    <div class="form-group">
-      <label class="form-label">Parámetro 1</label>
-      <div class="result-row">
-        <div><label class="form-label">Nombre</label><input type="text" class="form-input param-name" placeholder="Ej: Cloro libre"></div>
-        <div><label class="form-label">Valor patrón → obtenido</label><input type="text" class="form-input param-val" placeholder="1.00 → 1.02 mg/L"></div>
-        <div><label class="form-label">OK</label><div class="result-status" onclick="toggleStatus(this)">—</div></div>
-      </div>
-    </div>`;
+  document.getElementById('verifParams').innerHTML = makeParamBlock(1);
   openModal('modalVerif');
 }
 
 function addParamRow() {
   const container = document.getElementById('verifParams');
-  const n = container.querySelectorAll('.form-group').length + 1;
-  const div = document.createElement('div');
-  div.className = 'form-group';
-  div.innerHTML = `<label class="form-label">Parámetro ${n}</label>
-    <div class="result-row">
-      <div><label class="form-label">Nombre</label><input type="text" class="form-input param-name" placeholder="Parámetro"></div>
-      <div><label class="form-label">Valor patrón → obtenido</label><input type="text" class="form-input param-val" placeholder="x.xx → x.xx mg/L"></div>
-      <div><label class="form-label">OK</label><div class="result-status" onclick="toggleStatus(this)">—</div></div>
-    </div>`;
-  container.appendChild(div);
+  const n = container.querySelectorAll('[data-param]').length + 1;
+  container.insertAdjacentHTML('beforeend', makeParamBlock(n));
+}
+
+function removeParamBlock(btn) {
+  const container = document.getElementById('verifParams');
+  if (container.querySelectorAll('[data-param]').length <= 1) return; // mínimo 1
+  btn.closest('[data-param]').remove();
 }
 
 function toggleStatus(el) {
@@ -1523,19 +1654,25 @@ function toggleStatus(el) {
 function saveVerificacion() {
   const fotoId = document.getElementById('mVerifFoto').value;
   const fecha = document.getElementById('mVerifFecha').value;
-  if (!fotoId || !fecha) { alert('Selecciona fotómetro y fecha'); return; }
+  if (!fotoId || !fecha) { alert('Selecciona equipo y fecha'); return; }
 
-  const names = [...document.querySelectorAll('.param-name')].map(i => i.value.trim());
-  const vals = [...document.querySelectorAll('.param-val')].map(i => i.value.trim());
-  const statuses = [...document.querySelectorAll('.result-status')].map(el =>
-    el.classList.contains('pass') ? 'pass' : el.classList.contains('fail') ? 'fail' : 'pass'
-  );
-  const params = names.map((n,i) => ({ nombre: n||`Parámetro ${i+1}`, valor: vals[i], status: statuses[i] }));
+  const blocks = [...document.querySelectorAll('[data-param]')];
+  const params = blocks.map(b => {
+    const nombre = b.querySelector('.param-name').value.trim();
+    const kit = b.querySelector('.param-kit').value.trim();
+    const patron = b.querySelector('.param-patron').value.trim();
+    const obtenido = b.querySelector('.param-obtenido').value.trim();
+    const statusEl = b.querySelector('.result-status');
+    const status = statusEl.classList.contains('pass') ? 'pass'
+                 : statusEl.classList.contains('fail') ? 'fail' : 'pass';
+    return { nombre: nombre || `Parámetro`, kit, patron, obtenido, status };
+  });
+
   const global = params.some(p => p.status === 'fail') ? 'fail' : 'pass';
 
   const obj = {
     id: DB.id(), fotoId, fecha,
-    patron: document.getElementById('mVerifPatron').value.trim(),
+    patron: params.map(p => p.kit).filter(Boolean).join('; '), // campo legado
     tecnico: document.getElementById('mVerifTecnico').value.trim(),
     params, global,
     notas: document.getElementById('mVerifNotas').value.trim(),
@@ -1815,7 +1952,10 @@ function exportPDF() {
       <thead><tr><th>Fecha</th><th>Patrón / Kit</th><th>Parámetros verificados</th><th>Técnico</th><th>Resultado</th><th>Observaciones</th></tr></thead>
       <tbody>`;
     fv.forEach(v => {
-      const paramsStr = (v.params||[]).map(p=>`${p.nombre}: ${p.valor} [${p.status==='pass'?'OK':'FALLO'}]`).join('<br>');
+      const paramsStr = (v.params||[]).map(p=>{
+        const v2 = p.patron && p.obtenido ? `Patrón: ${p.patron} → Obtenido: ${p.obtenido}` : (p.valor||'');
+        return `${p.nombre}${p.kit?` [${p.kit}]`:''}: ${v2} [${p.status==='pass'?'OK':'FALLO'}]`;
+      }).join('<br>');
       html += `<tr>
         <td class="mono">${fmtDate(v.fecha)}</td>
         <td>${v.patron||'—'}</td>
@@ -1837,6 +1977,193 @@ function exportPDF() {
     <button onclick="window.close()" style="padding:10px 24px;background:#eee;color:#333;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin-left:8px;">Cerrar</button>
   </div>
   </body></html>`;
+
+  const w = window.open('', '_blank', 'width=900,height=700');
+  w.document.write(html);
+  w.document.close();
+}
+
+// ============================================================
+//  IMPRIMIR VERIFICACIÓN INDIVIDUAL
+// ============================================================
+function printVerif(verifId) {
+  const v = getVerifs().find(x => x.id === verifId);
+  if (!v) return;
+  const foto = getFotos().find(f => f.id === v.fotoId);
+  const nowStr = new Date().toLocaleDateString('es-ES', {day:'2-digit',month:'2-digit',year:'numeric'});
+  const passFail = v.global === 'pass';
+
+  const paramsTable = (v.params||[]).map(p => {
+    const patron = p.patron || (p.valor ? p.valor.split('→')[0]?.trim() : '—');
+    const obtenido = p.obtenido || (p.valor ? p.valor.split('→')[1]?.trim() : '—');
+    return `<tr>
+      <td><strong>${p.nombre}</strong></td>
+      <td>${p.kit||'—'}</td>
+      <td class="mono">${patron||'—'}</td>
+      <td class="mono">${obtenido||'—'}</td>
+      <td style="text-align:center;font-size:16px;color:${p.status==='pass'?'#006633':'#cc2233'}">${p.status==='pass'?'✓':'✗'}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<title>Verificación ${fmtDate(v.fecha)} — ${foto?.nombre||'Equipo'}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 20px; }
+  .header { display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #003366;padding-bottom:12px;margin-bottom:16px; }
+  .logo { font-size:22px;font-weight:900;color:#003366; }
+  .logo-sub { font-size:10px;color:#666;margin-top:2px; }
+  h2 { font-size:14px;color:#003366;border-bottom:1px solid #dde;padding-bottom:4px;margin:16px 0 10px; }
+  table { width:100%;border-collapse:collapse;font-size:11px; }
+  th { background:#003366;color:#fff;padding:6px 8px;text-align:left; }
+  td { padding:5px 8px;border-bottom:1px solid #dde; }
+  tr:nth-child(even) td { background:#f5f8ff; }
+  .info-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px; }
+  .info-box { background:#f5f8ff;border:1px solid #dde;border-radius:4px;padding:10px; }
+  .info-label { font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px; }
+  .info-val { font-size:13px;font-weight:700; }
+  .mono { font-family:'Courier New',monospace; }
+  .badge { display:inline-block;padding:4px 12px;border-radius:4px;font-size:12px;font-weight:700; }
+  .pass { background:#e6f9f0;color:#006633;border:1px solid #00a86b40; }
+  .fail { background:#fde8ea;color:#cc2233;border:1px solid #cc223340; }
+  footer { margin-top:24px;border-top:1px solid #dde;padding-top:8px;font-size:10px;color:#888;display:flex;justify-content:space-between; }
+  .sign-box { display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px; }
+  .sign-line { border-top:1px solid #333;margin-top:32px;padding-top:4px;font-size:10px;color:#666; }
+  @media print { .no-print { display:none; } @page { margin:15mm;size:A4; } }
+</style></head><body>
+<div class="header">
+  <div><div class="logo">FotoCalib</div><div class="logo-sub">Verificación de equipo de medida · RD 3/2023 · RD 487/2022</div></div>
+  <div style="text-align:right;font-size:11px;color:#555;">Fecha: <strong>${fmtDate(v.fecha)}</strong><br>Informe: <strong>${nowStr}</strong></div>
+</div>
+
+<div class="info-grid">
+  <div class="info-box">
+    <div class="info-label">Equipo</div>
+    <div class="info-val">${foto?.nombre||'—'}</div>
+    <div style="font-size:11px;color:#666;margin-top:2px">${foto?.param||''} · ${foto?.ubicacion||''}</div>
+  </div>
+  <div class="info-box">
+    <div class="info-label">Nº Serie</div>
+    <div class="info-val mono">${foto?.serie||'—'}</div>
+  </div>
+  <div class="info-box">
+    <div class="info-label">Técnico responsable</div>
+    <div class="info-val">${v.tecnico||'—'}</div>
+  </div>
+  <div class="info-box">
+    <div class="info-label">Resultado global</div>
+    <div><span class="badge ${passFail?'pass':'fail'}">${passFail?'✓ PASA':'✗ FALLA'}</span></div>
+  </div>
+</div>
+
+<h2>Resultados por parámetro</h2>
+<table>
+  <thead><tr><th>Parámetro</th><th>Kit / Referencia patrón</th><th>Valor patrón</th><th>Valor obtenido</th><th style="text-align:center">Resultado</th></tr></thead>
+  <tbody>${paramsTable}</tbody>
+</table>
+
+${v.notas ? `<div style="margin-top:14px;background:#fff8dc;border:1px solid #ddc;padding:10px;border-radius:4px;font-size:12px;"><strong>Observaciones / Acciones correctoras:</strong><br>${v.notas}</div>` : ''}
+
+<div class="sign-box">
+  <div><div class="sign-line">Firma del técnico responsable</div></div>
+  <div><div class="sign-line">Visto bueno / Responsable instalación</div></div>
+</div>
+
+<footer>
+  <span>FotoCalib · RD 3/2023 · RD 487/2022 — Verificación mensual de equipo de medida</span>
+  <span>Generado: ${nowStr}</span>
+</footer>
+
+<div class="no-print" style="text-align:center;margin:20px;">
+  <button onclick="window.print()" style="padding:10px 24px;background:#003366;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">🖨️ Imprimir / Guardar PDF</button>
+  <button onclick="window.close()" style="padding:10px 24px;background:#eee;color:#333;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin-left:8px;">Cerrar</button>
+</div>
+</body></html>`;
+
+  const w = window.open('', '_blank', 'width=900,height=700');
+  w.document.write(html);
+  w.document.close();
+}
+
+// ============================================================
+//  IMPRIMIR TRAZABILIDAD
+// ============================================================
+function printTrazabilidad() {
+  const fotoId = document.getElementById('trazSelect').value;
+  if (!fotoId) { alert('Selecciona un equipo primero'); return; }
+
+  const fotos = fotoId === '__all__' ? getFotos() : getFotos().filter(f => f.id === fotoId);
+  const nowStr = new Date().toLocaleDateString('es-ES', {day:'2-digit',month:'2-digit',year:'numeric'});
+  const tipoIcons = { fotometro:'📟', turbidimetro:'💧', termometro:'🌡️', otro:'🔧' };
+
+  let body = '';
+  fotos.forEach(foto => {
+    const verifs = getVerifs().filter(v => v.fotoId === foto.id).sort((a,b)=>a.fecha<b.fecha?1:-1);
+    const cals = getCals().filter(c => c.fotoId === foto.id).sort((a,b)=>a.fecha<b.fecha?1:-1);
+
+    const allEvents = [];
+    if (foto.calFecha) allEvents.push({ tipo:'CAL', fecha: foto.calFecha, titulo:'Calibración anual (inicial)', detalle: `Lab: ${foto.calLab||'—'} · Cert: ${foto.calCert||'—'}`, resultado: '' });
+    cals.forEach(c => allEvents.push({ tipo:'CAL', fecha: c.fecha, titulo:'Calibración anual', detalle:`Lab: ${c.lab||'—'} · Cert: ${c.cert||'—'}`, resultado: c.resultado||'', vigencia: c.vigencia }));
+    verifs.forEach(v => {
+      const paramsStr = (v.params||[]).map(p=>{
+        const pval = p.patron && p.obtenido ? `${p.patron} → ${p.obtenido}` : (p.valor||'');
+        return `${p.nombre}: ${pval} (${p.status==='pass'?'OK':'FALLO'})`;
+      }).join(' | ');
+      allEvents.push({ tipo: v.global==='pass'?'OK':'FALLO', fecha: v.fecha, titulo:`Verificación mensual`, detalle: `Técnico: ${v.tecnico||'—'}`, params: paramsStr, notas: v.notas });
+    });
+    allEvents.sort((a,b)=>a.fecha<b.fecha?1:-1);
+
+    body += `<h2>${tipoIcons[foto.tipo]||'📟'} ${foto.nombre} <span class="mono" style="font-size:11px;font-weight:400;color:#666;">(${foto.serie})</span></h2>
+    <p style="font-size:11px;color:#666;margin-bottom:8px;">${foto.param} · ${foto.ubicacion}</p>
+    <table>
+      <thead><tr><th>Fecha</th><th>Tipo</th><th>Detalle</th><th>Resultado/Parámetros</th><th>Observaciones</th></tr></thead>
+      <tbody>
+    ${allEvents.map(e => `<tr>
+      <td class="mono">${fmtDate(e.fecha)}</td>
+      <td><span class="badge ${e.tipo==='CAL'?'cal':e.tipo==='OK'?'pass':'fail'}">${e.tipo}</span></td>
+      <td>${e.titulo}<br><span style="color:#666;font-size:11px">${e.detalle}</span>${e.vigencia?`<br><span style="color:#666;font-size:11px">Válida hasta: ${fmtDate(e.vigencia)}</span>`:''}</td>
+      <td style="font-size:11px">${e.resultado||e.params||'—'}</td>
+      <td style="font-size:11px;font-style:italic;color:#666">${e.notas||''}</td>
+    </tr>`).join('')}
+      </tbody>
+    </table>`;
+  });
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<title>Trazabilidad — FotoCalib</title>
+<style>
+  * { box-sizing:border-box;margin:0;padding:0; }
+  body { font-family:Arial,sans-serif;font-size:12px;color:#111;padding:20px; }
+  .header { display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #003366;padding-bottom:12px;margin-bottom:16px; }
+  .logo { font-size:22px;font-weight:900;color:#003366; }
+  .logo-sub { font-size:10px;color:#666;margin-top:2px; }
+  h2 { font-size:13px;color:#003366;border-bottom:2px solid #003366;padding-bottom:4px;margin:18px 0 6px; }
+  table { width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px; }
+  th { background:#003366;color:#fff;padding:5px 8px;text-align:left; }
+  td { padding:5px 8px;border-bottom:1px solid #dde;vertical-align:top; }
+  tr:nth-child(even) td { background:#f5f8ff; }
+  .mono { font-family:'Courier New',monospace; }
+  .badge { display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:700; }
+  .pass { background:#e6f9f0;color:#006633; }
+  .fail { background:#fde8ea;color:#cc2233; }
+  .cal { background:#e8f0ff;color:#003366; }
+  footer { margin-top:24px;border-top:1px solid #dde;padding-top:8px;font-size:10px;color:#888;display:flex;justify-content:space-between; }
+  @media print { .no-print { display:none; } @page { margin:15mm;size:A4; } }
+</style></head><body>
+<div class="header">
+  <div><div class="logo">FotoCalib</div><div class="logo-sub">Trazabilidad de equipos de medida · RD 3/2023 · RD 487/2022</div></div>
+  <div style="text-align:right;font-size:11px;color:#555;">Informe generado: <strong>${nowStr}</strong></div>
+</div>
+${body}
+<footer>
+  <span>FotoCalib · RD 3/2023 · RD 487/2022 — Registro de trazabilidad</span>
+  <span>Generado: ${nowStr}</span>
+</footer>
+<div class="no-print" style="text-align:center;margin:20px;">
+  <button onclick="window.print()" style="padding:10px 24px;background:#003366;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">🖨️ Imprimir / Guardar PDF</button>
+  <button onclick="window.close()" style="padding:10px 24px;background:#eee;color:#333;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin-left:8px;">Cerrar</button>
+</div>
+</body></html>`;
 
   const w = window.open('', '_blank', 'width=900,height=700');
   w.document.write(html);
