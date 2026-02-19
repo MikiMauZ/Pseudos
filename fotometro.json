@@ -1,12 +1,12 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-02-19T13:58:45.253Z",
+  "lastUpdated": "2026-02-19T14:01:09.876Z",
   "fotometros": [
     {
       "id": "1771508921917cay5",
       "nombre": "Lovivond MD 110",
       "serie": "21/63305",
-      "param": "MultiparÃ¡metro",
+      "param": "MultiparÃÂ¡metro",
       "ubicacion": "TALLER WAVE",
       "estado": "activo",
       "calFecha": "2026-02-16",
@@ -16,7 +16,7 @@
     },
     {
       "id": "1771509514484qr35",
-      "nombre": "TURBIDIMETRO TURBICKECK",
+      "nombre": "TURBIDIMETRO TURBICHECK",
       "serie": "21/63305",
       "param": "Turbidez",
       "ubicacion": "TALLER WAVE",
@@ -28,6 +28,22 @@
     }
   ],
   "verificaciones": [
+    {
+      "id": "1771509525252nmte",
+      "fotoId": "1771509514484qr35",
+      "fecha": "2026-02-19",
+      "patron": "",
+      "tecnico": "",
+      "params": [
+        {
+          "nombre": "ParÃ¡metro 1",
+          "valor": "",
+          "status": "pass"
+        }
+      ],
+      "global": "pass",
+      "notas": ""
+    },
     {
       "id": "1771509302753vhqh",
       "fotoId": "1771508921917cay5",
@@ -53,22 +69,6 @@
       ],
       "global": "pass",
       "notas": "Todo correcto"
-    },
-    {
-      "id": "1771509525252nmte",
-      "fotoId": "1771509514484qr35",
-      "fecha": "2026-02-19",
-      "patron": "",
-      "tecnico": "",
-      "params": [
-        {
-          "nombre": "Parámetro 1",
-          "valor": "",
-          "status": "pass"
-        }
-      ],
-      "global": "pass",
-      "notas": ""
     }
   ],
   "calibraciones": []
