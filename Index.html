@@ -1,2144 +1,1698 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Tratamientos Pseudomonas</title>
-    
-    <!-- External Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0e1a">
+<title>FotoCalib · RD 3/2023</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #00ff9d;
+    --warn: #ffb800;
+    --danger: #ff4757;
+    --text: #e8edf5;
+    --text2: #9aadbe;
+    --mono: 'JetBrains Mono', 'Courier New', Courier, monospace;
+    --sans: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius: 12px;
+  }
 
-        body {
-            font-family: 'Arial', 'Helvetica', sans-serif;
-            background: #f5f7fa;
-            min-height: 100vh;
-            color: #2c3e50;
-            line-height: 1.6;
-        }
+*, *::before, *::after {
+box-sizing: border-box !important;
+margin: 0;
+padding: 0;
+-webkit-tap-highlight-color: transparent;
+}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+html {
+background: #0a0e1a !important;
+min-height: 100% !important;
+}
 
-        .header {
-            background: linear-gradient(135deg, #34495e, #2c3e50);
-            color: white;
-            padding: 40px 30px;
-            margin-bottom: 0;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
+body {
+font-family: var(–sans) !important;
+background: #0a0e1a !important;
+color: #e8edf5 !important;
+min-height: 100vh;
+display: flex !important;
+flex-direction: column !important;
+max-width: 480px;
+margin: 0 auto !important;
+position: relative;
+overflow-x: hidden;
+}
 
-        .header h1 {
-            font-size: 2.8em;
-            margin-bottom: 10px;
-            font-weight: 300;
-            letter-spacing: 1px;
-        }
+/* — HEADER — */
+.header {
+padding: 16px 20px 12px;
+background: var(–surface);
+border-bottom: 1px solid var(–border);
+display: flex;
+align-items: center;
+justify-content: space-between;
+position: sticky;
+top: 0;
+z-index: 100;
+}
+.header-title {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+.logo-icon {
+width: 32px; height: 32px;
+background: linear-gradient(135deg, var(–accent), #0066ff);
+border-radius: 8px;
+display: flex; align-items: center; justify-content: center;
+font-size: 16px;
+}
+.app-name { font-weight: 700; font-size: 16px; letter-spacing: 0.5px; }
+.app-sub { font-family: var(–mono); font-size: 10px; color: var(–accent); letter-spacing: 1px; }
+.header-date {
+font-family: var(–mono);
+font-size: 11px;
+color: var(–text2);
+text-align: right;
+}
 
-        .header p {
-            font-size: 1.3em;
-            opacity: 0.9;
-            font-weight: 300;
-        }
+/* — NAV — */
+.bottom-nav {
+position: fixed;
+bottom: 0; left: 50%;
+transform: translateX(-50%);
+width: 100%; max-width: 480px;
+background: var(–surface);
+border-top: 1px solid var(–border);
+display: flex;
+z-index: 100;
+padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-btn {
+flex: 1;
+display: flex; flex-direction: column; align-items: center;
+gap: 3px; padding: 10px 4px 8px;
+background: none; border: none; color: var(–text2);
+cursor: pointer; transition: color 0.2s;
+font-family: var(–sans); font-size: 10px;
+}
+.nav-btn.active { color: var(–accent); }
+.nav-btn svg { width: 22px; height: 22px; }
+.nav-dot {
+width: 5px; height: 5px;
+border-radius: 50%;
+background: var(–danger);
+position: absolute; top: 8px; right: calc(50% - 12px);
+}
 
-        .main-content {
-            background: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
+/* — CONTENT — */
+.content {
+flex: 1;
+padding: 16px 16px 100px;
+overflow-y: auto;
+background: #0a0e1a;
+}
 
-        .nav-tabs {
-            display: flex;
-            background: #ecf0f1;
-            border-bottom: 2px solid #bdc3c7;
-        }
+.page { display: none; }
+.page.active { display: block; }
 
-        .nav-tab {
-            flex: 1;
-            padding: 18px 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-            background: none;
-            font-size: 1.1em;
-            font-weight: 500;
-            color: #34495e;
-            border-right: 1px solid #bdc3c7;
-        }
+/* — CARDS — */
+.card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: var(–radius);
+padding: 14px 16px;
+margin-bottom: 12px;
+position: relative;
+overflow: hidden;
+}
+.card::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 2px;
+}
+.card.ok::before { background: var(–accent2); }
+.card.warn::before { background: var(–warn); }
+.card.danger::before { background: var(–danger); }
+.card.neutral::before { background: var(–border); }
 
-        .nav-tab:last-child {
-            border-right: none;
-        }
+.card-header {
+display: flex; align-items: flex-start;
+justify-content: space-between; gap: 8px;
+margin-bottom: 8px;
+}
+.card-title { font-weight: 600; font-size: 14px; }
+.card-serial {
+font-family: var(–mono); font-size: 11px;
+color: var(–accent); background: rgba(0,212,255,0.1);
+padding: 2px 8px; border-radius: 4px; white-space: nowrap;
+}
+.card-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+.meta-item {
+display: flex; flex-direction: column; gap: 1px;
+}
+.meta-label {
+font-size: 10px; color: var(–text2);
+font-family: var(–mono); letter-spacing: 0.5px; text-transform: uppercase;
+}
+.meta-value { font-size: 13px; font-weight: 500; }
+.meta-value.ok { color: var(–accent2); }
+.meta-value.warn { color: var(–warn); }
+.meta-value.danger { color: var(–danger); }
 
-        .nav-tab.active {
-            background: white;
-            color: #e74c3c;
-            border-bottom: 3px solid #e74c3c;
-            font-weight: 600;
-        }
+.badge {
+display: inline-flex; align-items: center; gap: 4px;
+padding: 3px 10px; border-radius: 20px;
+font-size: 11px; font-weight: 600; font-family: var(–mono);
+}
+.badge.ok { background: rgba(0,255,157,0.1); color: var(–accent2); }
+.badge.warn { background: rgba(255,184,0,0.1); color: var(–warn); }
+.badge.danger { background: rgba(255,71,87,0.12); color: var(–danger); }
+.badge::before {
+content: ‘’; width: 6px; height: 6px;
+border-radius: 50%; background: currentColor;
+}
 
-        .nav-tab:hover:not(.active) {
-            background: #d5dbdb;
-            color: #2c3e50;
-        }
+.card-actions {
+display: flex; gap: 8px; margin-top: 12px;
+padding-top: 12px; border-top: 1px solid var(–border);
+}
+.btn {
+flex: 1; padding: 9px 12px;
+border: none; border-radius: 8px;
+font-family: var(–sans); font-size: 13px; font-weight: 600;
+cursor: pointer; transition: all 0.15s;
+display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-primary { background: var(–accent); color: #000; }
+.btn-primary:active { transform: scale(0.97); }
+.btn-secondary { background: var(–surface2); color: var(–text); border: 1px solid var(–border); }
+.btn-danger { background: rgba(255,71,87,0.12); color: var(–danger); border: 1px solid rgba(255,71,87,0.2); }
+.btn-ghost { background: none; color: var(–accent); font-size: 13px; border: 1px solid var(–accent); }
+.btn-icon { flex: none; width: 36px; height: 36px; padding: 0; }
 
-        .tab-content {
-            display: none;
-            padding: 35px;
-        }
+.btn-full { width: 100%; flex: none; margin-top: 12px; padding: 13px; border-radius: 10px; }
 
-        .tab-content.active {
-            display: block;
-        }
+/* — FAB — */
+.fab {
+position: fixed;
+bottom: 80px; right: 20px;
+width: 52px; height: 52px;
+border-radius: 16px;
+background: linear-gradient(135deg, var(–accent), #0066ff);
+border: none; color: #000;
+font-size: 24px; font-weight: 300;
+cursor: pointer; box-shadow: 0 4px 20px rgba(0,212,255,0.35);
+display: flex; align-items: center; justify-content: center;
+z-index: 90; transition: transform 0.15s, box-shadow 0.15s;
+}
+.fab:active { transform: scale(0.93); box-shadow: 0 2px 10px rgba(0,212,255,0.2); }
 
-        .card {
-            background: white;
-            padding: 30px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border: 1px solid #e8e8e8;
-            border-left: 4px solid #e74c3c;
-        }
+/* — SECTION HEADERS — */
+.section-label {
+font-family: var(–mono); font-size: 10px; font-weight: 600;
+letter-spacing: 2px; text-transform: uppercase;
+color: var(–text2); margin-bottom: 10px; margin-top: 4px;
+display: flex; align-items: center; gap: 8px;
+}
+.section-label::after {
+content: ‘’; flex: 1; height: 1px; background: var(–border);
+}
 
-        .card h2 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 1.8em;
-            font-weight: 500;
-        }
+/* — STAT GRID — */
+.stat-grid {
+display: grid; grid-template-columns: 1fr 1fr;
+gap: 10px; margin-bottom: 16px;
+}
+.stat-card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: var(–radius);
+padding: 14px;
+}
+.stat-num {
+font-family: var(–mono); font-size: 28px; font-weight: 700;
+line-height: 1;
+}
+.stat-num.ok { color: var(–accent2); }
+.stat-num.warn { color: var(–warn); }
+.stat-num.danger { color: var(–danger); }
+.stat-num.accent { color: var(–accent); }
+.stat-desc { font-size: 12px; color: var(–text2); margin-top: 4px; }
 
-        .form-group {
-            margin-bottom: 25px;
-        }
+/* — MODAL — */
+.modal-overlay {
+position: fixed; inset: 0;
+background: rgba(0,0,0,0.7);
+z-index: 200; display: none;
+align-items: flex-end; justify-content: center;
+backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+background: var(–surface);
+border-radius: 20px 20px 0 0;
+border-top: 1px solid var(–border);
+padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+width: 100%; max-width: 480px;
+max-height: 90dvh;
+overflow-y: auto;
+animation: slideUp 0.3s cubic-bezier(0.32,0.72,0,1);
+}
+@keyframes slideUp {
+from { transform: translateY(100%); }
+to { transform: translateY(0); }
+}
+.modal-handle {
+width: 36px; height: 4px;
+background: var(–border); border-radius: 2px;
+margin: 0 auto 16px;
+}
+.modal-title {
+font-weight: 700; font-size: 16px;
+margin-bottom: 16px;
+display: flex; align-items: center; gap: 8px;
+}
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #34495e;
-            font-size: 1em;
-        }
+/* — FORMS — */
+.form-group { margin-bottom: 14px; }
+.form-label {
+display: block; font-size: 11px; font-weight: 600;
+letter-spacing: 0.8px; text-transform: uppercase;
+color: var(–text2); font-family: var(–mono);
+margin-bottom: 6px;
+}
+.form-input {
+width: 100%; padding: 11px 14px;
+background: var(–bg);
+border: 1px solid var(–border);
+border-radius: 8px;
+color: var(–text);
+font-family: var(–sans); font-size: 14px;
+transition: border-color 0.2s;
+appearance: none;
+}
+.form-input:focus { outline: none; border-color: var(–accent); }
+select.form-input { background-image: url(“data:image/svg+xml,%3Csvg xmlns=‘http://www.w3.org/2000/svg’ width=‘12’ height=‘8’%3E%3Cpath d=‘M0 0l6 8 6-8z’ fill=’%237a8fa8’/%3E%3C/svg%3E”); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+textarea.form-input { resize: none; min-height: 80px; }
 
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #d5dbdb;
-            font-size: 1em;
-            transition: border-color 0.3s ease;
-            background: white;
-        }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-divider { height: 1px; background: var(–border); margin: 16px 0; }
 
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-        }
+/* — RESULT FIELDS — */
+.result-row {
+display: grid; grid-template-columns: 1fr 1fr 60px;
+gap: 8px; align-items: end; margin-bottom: 10px;
+}
+.result-status {
+width: 36px; height: 36px;
+border-radius: 8px; border: 2px solid var(–border);
+display: flex; align-items: center; justify-content: center;
+font-size: 18px; cursor: pointer;
+transition: all 0.15s;
+background: var(–bg);
+align-self: flex-end;
+}
+.result-status.pass { border-color: var(–accent2); background: rgba(0,255,157,0.1); }
+.result-status.fail { border-color: var(–danger); background: rgba(255,71,87,0.1); }
 
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 8px 8px 8px 0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+/* — TRACEABILITY — */
+.timeline { position: relative; }
+.timeline-item {
+display: flex; gap: 12px;
+padding-bottom: 16px;
+position: relative;
+}
+.timeline-item::before {
+content: ‘’; position: absolute;
+left: 15px; top: 28px; bottom: 0;
+width: 1px; background: var(–border);
+}
+.timeline-item:last-child::before { display: none; }
+.timeline-dot {
+width: 30px; height: 30px; flex-shrink: 0;
+border-radius: 50%;
+display: flex; align-items: center; justify-content: center;
+font-size: 13px;
+border: 2px solid;
+}
+.timeline-dot.calibracion { border-color: var(–accent); background: rgba(0,212,255,0.1); }
+.timeline-dot.verificacion_ok { border-color: var(–accent2); background: rgba(0,255,157,0.1); }
+.timeline-dot.verificacion_fail { border-color: var(–danger); background: rgba(255,71,87,0.1); }
+.timeline-body { flex: 1; padding-top: 4px; }
+.timeline-title { font-size: 13px; font-weight: 600; }
+.timeline-date { font-family: var(–mono); font-size: 11px; color: var(–text2); margin-top: 2px; }
+.timeline-note { font-size: 12px; color: var(–text2); margin-top: 4px; }
 
-        .btn-primary {
-            background: #3498db;
-            color: white;
-        }
+/* — EMPTY STATE — */
+.empty {
+text-align: center; padding: 48px 20px;
+color: var(–text2);
+}
+.empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+.empty h3 { font-size: 15px; color: var(–text); margin-bottom: 6px; }
+.empty p { font-size: 13px; }
 
-        .btn-primary:hover {
-            background: #2980b9;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-        }
+/* — CHIP FILTERS — */
+.filter-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 14px; }
+.filter-row::-webkit-scrollbar { display: none; }
+.chip {
+padding: 5px 14px; border-radius: 20px; white-space: nowrap;
+font-size: 12px; font-weight: 600; cursor: pointer;
+border: 1px solid var(–border);
+background: var(–surface2); color: var(–text2);
+transition: all 0.15s; flex-shrink: 0;
+font-family: var(–mono);
+}
+.chip.active { background: var(–accent); color: #000; border-color: var(–accent); }
 
-        .btn-success {
-            background: #27ae60;
-            color: white;
-        }
+/* — ALERT BANNER — */
+.alert-banner {
+background: rgba(255,71,87,0.12);
+border: 1px solid rgba(255,71,87,0.35);
+border-radius: 10px; padding: 12px 14px;
+margin-bottom: 12px; display: flex; align-items: flex-start; gap: 10px;
+font-size: 13px; color: var(–text);
+}
+.alert-banner strong { color: #fff; }
+.alert-banner span { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
 
-        .btn-success:hover {
-            background: #229954;
-            transform: translateY(-1px);
-        }
+/* — PHOTO UPLOAD AREA — */
+.upload-area {
+border: 2px dashed var(–border);
+border-radius: 10px; padding: 20px;
+text-align: center; cursor: pointer;
+color: var(–text2); font-size: 13px;
+transition: border-color 0.2s;
+}
+.upload-area:hover { border-color: var(–accent); color: var(–accent); }
+.upload-area input { display: none; }
+.upload-preview {
+display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;
+}
+.upload-thumb {
+width: 64px; height: 64px; border-radius: 8px;
+object-fit: cover; border: 1px solid var(–border);
+cursor: pointer;
+}
 
-        .btn-warning {
-            background: #f39c12;
-            color: white;
-        }
+/* — ALERT DOT — */
+.nav-alert { position: relative; }
 
-        .btn-warning:hover {
-            background: #e67e22;
-            transform: translateY(-1px);
-        }
+/* — CONFIRM DIALOG — */
+.confirm-dialog {
+position: fixed; inset: 0;
+display: none; align-items: center; justify-content: center;
+z-index: 300; background: rgba(0,0,0,0.7);
+backdrop-filter: blur(4px); padding: 20px;
+}
+.confirm-dialog.open { display: flex; }
+.confirm-box {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 16px; padding: 24px;
+max-width: 300px; width: 100%;
+text-align: center;
+}
+.confirm-icon { font-size: 36px; margin-bottom: 12px; }
+.confirm-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.confirm-msg { font-size: 13px; color: var(–text2); margin-bottom: 20px; }
+.confirm-btns { display: flex; gap: 10px; }
+</style>
 
-        .btn-info {
-            background: #17a2b8;
-            color: white;
-        }
-
-        .btn-info:hover {
-            background: #138496;
-            transform: translateY(-1px);
-        }
-
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-            transform: translateY(-1px);
-        }
-
-        .protocol-step {
-            background: #f8f9fa;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-left: 5px solid #27ae60;
-            border: 1px solid #e8e8e8;
-        }
-
-        .protocol-step.completed {
-            background: #d4edda;
-            border-left-color: #155724;
-        }
-
-        .step-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .step-number {
-            background: #e74c3c;
-            color: white;
-            width: 35px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        .photo-section {
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border: 2px dashed #bdc3c7;
-        }
-
-        .photo-section h4 {
-            color: #34495e;
-            margin-bottom: 10px;
-        }
-
-        .photo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .photo-item {
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border: 1px solid #e8e8e8;
-        }
-
-        .photo-item img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            display: block;
-        }
-
-        .photo-item .delete-photo {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(231, 76, 60, 0.9);
-            color: white;
-            border: none;
-            width: 28px;
-            height: 28px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-        }
-
-        .timeline {
-            position: relative;
-            padding-left: 40px;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 20px;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: #e74c3c;
-        }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 25px;
-            background: white;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border: 1px solid #e8e8e8;
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -28px;
-            top: 25px;
-            width: 15px;
-            height: 15px;
-            background: #e74c3c;
-            border: 4px solid white;
-        }
-
-        .export-buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 25px;
-            padding-top: 25px;
-            border-top: 2px solid #ecf0f1;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 25px;
-            background: #ecf0f1;
-            overflow: hidden;
-            margin: 25px 0;
-            border: 1px solid #bdc3c7;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            transition: width 0.3s ease;
-        }
-
-        .alert {
-            padding: 20px;
-            margin-bottom: 25px;
-            border: 1px solid transparent;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            border-color: #ffeaa7;
-            color: #856404;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
-        }
-
-        .alert-info {
-            background: #d1ecf1;
-            border-color: #bee5eb;
-            color: #0c5460;
-        }
-
-        .export-section {
-            background: #f8f9fa;
-            padding: 25px;
-            margin-top: 30px;
-            border: 1px solid #e8e8e8;
-        }
-
-        .export-section h3 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-        }
-
-        .measurement-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-        }
-
-        .measurement-table th,
-        .measurement-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border: 1px solid #e8e8e8;
-        }
-
-        .measurement-table th {
-            background: #34495e;
-            color: white;
-            font-weight: 600;
-        }
-
-        .measurement-table tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .header {
-                padding: 25px 20px;
-            }
-            
-            .header h1 {
-                font-size: 2.2em;
-            }
-            
-            .nav-tabs {
-                flex-direction: column;
-            }
-            
-            .nav-tab {
-                border-right: none;
-                border-bottom: 1px solid #bdc3c7;
-            }
-            
-            .export-buttons {
-                flex-direction: column;
-            }
-            
-            .btn {
-                width: 100%;
-                margin: 5px 0;
-            }
-
-            .step-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .loading.active {
-            display: block;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🦠 GESTOR PSEUDOMONAS</h1>
-            <p>Sistema de Seguimiento y Documentación de Tratamientos</p>
-        </div>
+<body style="background:#0a0e1a!important;color:#e8edf5!important;margin:0!important;">
+<!-- Bloque de seguridad: por si el editor pisa el <head> -->
+<style>body,html{background:#0a0e1a!important;color:#e8edf5!important;}</style>
 
-        <div class="main-content">
-            <div class="nav-tabs">
-                <button class="nav-tab active" onclick="switchTab('incident')">📋 Nueva Incidencia</button>
-                <button class="nav-tab" onclick="switchTab('protocol')">🔬 Protocolo</button>
-                <button class="nav-tab" onclick="switchTab('tracking')">📊 Seguimiento</button>
-                <button class="nav-tab" onclick="switchTab('report')">📄 Informe</button>
-            </div>
+<!-- HEADER -->
 
-            <!-- Tab 1: Nueva Incidencia -->
-            <div id="incident" class="tab-content active">
-                <div class="card">
-                    <h2>📋 Registro de Nueva Incidencia</h2>
-                    <div class="alert alert-warning">
-                        <strong>⚠️ IMPORTANTE:</strong> La piscina debe ser cerrada al público hasta finalizar el tratamiento según protocolo oficial.
-                    </div>
-                    
-                    <form id="incidentForm">
-                        <div class="form-group">
-                            <label for="poolName">Piscina Afectada:</label>
-                            <input type="text" id="poolName" name="poolName" required placeholder="Ej: Piscina Principal, Piscina Infantil...">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="detectionDate">Fecha y Hora de Detección:</label>
-                            <input type="datetime-local" id="detectionDate" name="detectionDate" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="responsible">Responsable del Tratamiento:</label>
-                            <input type="text" id="responsible" name="responsible" required placeholder="Nombre completo del responsable">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="initialPh">pH Inicial:</label>
-                            <input type="number" id="initialPh" name="initialPh" step="0.1" min="0" max="14" placeholder="7.2">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="initialFreeChlorine">Cloro Libre Inicial (ppm):</label>
-                            <input type="number" id="initialFreeChlorine" name="initialFreeChlorine" step="0.1" min="0" placeholder="1.0">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="initialCombinedChlorine">Cloro Combinado Inicial (ppm):</label>
-                            <input type="number" id="initialCombinedChlorine" name="initialCombinedChlorine" step="0.1" min="0" placeholder="0.2">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="temperature">Temperatura del Agua (°C):</label>
-                            <input type="number" id="temperature" name="temperature" step="0.1" placeholder="26.5">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="observations">Observaciones Iniciales:</label>
-                            <textarea id="observations" name="observations" rows="4" placeholder="Describe el estado de la piscina, presencia de algas, color del agua, etc."></textarea>
-                        </div>
-
-                        <div class="photo-section">
-                            <h4>📸 Fotografías Iniciales</h4>
-                            <p>Documenta el estado inicial de la piscina, presencia de algas, equipos de medición, etc.</p>
-                            <input type="file" id="incidentPhotos" accept="image/*" multiple style="margin: 10px 0;">
-                            <div id="incidentPhotoGrid" class="photo-grid"></div>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary">💾 Registrar Incidencia y Comenzar Protocolo</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Tab 2: Protocolo -->
-            <div id="protocol" class="tab-content">
-                <div class="card">
-                    <h2>🔬 Protocolo de Actuación Oficial</h2>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="protocolProgress" style="width: 0%"></div>
-                    </div>
-                    <p><strong><span id="progressText">0</span> de 6 pasos completados</strong> | Progreso del tratamiento</p>
-                </div>
-
-                <div class="protocol-step" id="step1">
-                    <div class="step-header">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div class="step-number">1</div>
-                            <div>
-                                <h3>Limpieza General Completa</h3>
-                                <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em;">Preparación del área para el tratamiento</p>
-                            </div>
-                        </div>
-                        <button class="btn btn-success" onclick="completeStep(1)">✅ Marcar Completado</button>
-                    </div>
-                    <div style="background: white; padding: 15px; margin: 15px 0; border: 1px solid #e8e8e8;">
-                        <p><strong>Procedimiento:</strong></p>
-                        <ul style="margin-left: 20px; margin-top: 10px;">
-                            <li>Limpiar fondo de la piscina completamente</li>
-                            <li>Limpiar alrededores y rebosadero perimetral</li>
-                            <li>Limpiar skimmers y pre-filtros de partículas</li>
-                            <li>Vaciar y limpiar todas las cestillas</li>
-                        </ul>
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha y Hora de Realización:</label>
-                        <input type="datetime-local" id="step1Date">
-                    </div>
-                    <div class="form-group">
-                        <label>Observaciones del Proceso:</label>
-                        <textarea id="step1Notes" rows="3" placeholder="Detalla el estado encontrado, dificultades, materiales utilizados..."></textarea>
-                    </div>
-                    <div class="photo-section">
-                        <h4>📸 Documentación Fotográfica</h4>
-                        <p>Documenta el antes y después de la limpieza</p>
-                        <input type="file" id="step1Photos" accept="image/*" multiple>
-                        <div id="step1PhotoGrid" class="photo-grid"></div>
-                    </div>
-                </div>
-
-                <div class="protocol-step" id="step2">
-                    <div class="step-header">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div class="step-number">2</div>
-                            <div>
-                                <h3>Contra-lavado de Filtros</h3>
-                                <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em;">Preparación del sistema de filtración</p>
-                            </div>
-                        </div>
-                        <button class="btn btn-success" onclick="completeStep(2)">✅ Marcar Completado</button>
-                    </div>
-                    <div style="background: white; padding: 15px; margin: 15px 0; border: 1px solid #e8e8e8;">
-                        <p><strong>Procedimiento:</strong></p>
-                        <ul style="margin-left: 20px; margin-top: 10px;">
-                            <li>Realizar contra-lavado completo de todos los filtros</li>
-                            <li>Verificar el correcto funcionamiento del sistema</li>
-                            <li>Asegurar la eliminación de residuos acumulados</li>
-                        </ul>
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha y Hora de Realización:</label>
-                        <input type="datetime-local" id="step2Date">
-                    </div>
-                    <div class="form-group">
-                        <label>Observaciones del Proceso:</label>
-                        <textarea id="step2Notes" rows="3" placeholder="Estado de los filtros, tiempo de contra-lavado, calidad del agua de salida..."></textarea>
-                    </div>
-                    <div class="photo-section">
-                        <h4>📸 Documentación Fotográfica</h4>
-                        <p>Documenta el proceso de contra-lavado y estado de filtros</p>
-                        <input type="file" id="step2Photos" accept="image/*" multiple>
-                        <div id="step2PhotoGrid" class="photo-grid"></div>
-                    </div>
-                </div>
-
-                <div class="protocol-step" id="step3">
-                    <div class="step-header">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div class="step-number">3</div>
-                            <div>
-                                <h3>Tratamiento de Choque</h3>
-                                <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em;">Hipercloración inicial - CT = 3.600</p>
-                            </div>
-                        </div>
-                        <button class="btn btn-success" onclick="completeStep(3)">✅ Marcar Completado</button>
-                    </div>
-                    <div style="background: white; padding: 15px; margin: 15px 0; border: 1px solid #e8e8e8;">
-                        <p><strong>Parámetros Obligatorios:</strong></p>
-                        <ul style="margin-left: 20px; margin-top: 10px;">
-                            <li><strong>Cloro libre residual:</strong> 20-30 ppm</li>
-                            <li><strong>Tiempo de contacto:</strong> 2-3 horas</li>
-                            <li><strong>pH:</strong> mantener entre 7.2-7.5</li>
-                            <li><strong>Valor CT requerido:</strong> 3.600</li>
-                        </ul>
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha y Hora de Inicio:</label>
-                        <input type="datetime-local" id="step3DateStart">
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha y Hora de Finalización:</label>
-                        <input type="datetime-local" id="step3DateEnd">
-                    </div>
-                    <div class="form-group">
-                        <label>Cloro Libre Alcanzado (ppm):</label>
-                        <input type="number" id="step3Chlorine" step="0.1" min="20" max="30" placeholder="25.0">
-                    </div>
-                    <div class="form-group">
-                        <label>pH Final:</label>
-                        <input type="number" id="step3Ph" step="0.1" min="7.2" max="7.5" placeholder="7.3">
-                    </div>
-                    <div class="form-group">
-                        <label>Observaciones del Proceso:</label>
-                        <textarea id="step3Notes" rows="3" placeholder="Cantidad de producto utilizado, método de aplicación, mediciones intermedias..."></textarea>
-                    </div>
-                    <div class="photo-section">
-                        <h4>📸 Documentación Fotográfica</h4>
-                        <p>Documenta las mediciones, equipos utilizados y estado del agua</p>
-                        <input type="file" id="step3Photos" accept="image/*" multiple>
-                        <div id="step3PhotoGrid" class="photo-grid"></div>
-                    </div>
-                </div>
-
-                <div class="protocol-step" id="step4">
-                    <div class="step-header">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div class="step-number">4</div>
-                            <div>
-                                <h3>Hipercloración del Sistema</h3>
-                                <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em;">Tratamiento de toda la instalación</p>
-                            </div>
-                        </div>
-                        <button class="btn btn-success" onclick="completeStep(4)">✅ Marcar Completado</button>
-                    </div>
-                    <div style="background: white; padding: 15px; margin: 15px 0; border: 1px solid #e8e8e8;">
-                        <p><strong>Procedimiento Crítico:</strong></p>
-                        <ul style="margin-left: 20px; margin-top: 10px;">
-                            <li>Asegurar que el agua hiperclorada pase por todo el sistema de filtración</li>
-                            <li>Abrir by-pass y conectar sistemas auxiliares si existen</li>
-                            <li>Poner en marcha cascadas, jets y soplantes</li>
-                            <li>Permitir que todos los componentes se inunden con la solución</li>
-                            <li><strong>⚠️ CRÍTICO:</strong> Los filtros parados son puntos de riesgo</li>
-                        </ul>
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha y Hora de Realización:</label>
-                        <input type="datetime-local" id="step4Date">
-                    </div>
-                    <div class="form-group">
-                        <label>Sistemas Activados:</label>
-                        <textarea id="step4Systems" rows="2" placeholder="Lista todos los sistemas activados: cascadas, jets, soplantes, by-pass..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Observaciones del Proceso:</label>
-                        <textarea id="step4Notes" rows="3" placeholder="Tiempo necesario para inundación completa, verificaciones realizadas..."></textarea>
-                    </div>
-                    <div class="photo-section">
-                        <h4>📸 Documentación Fotográfica</h4>
-                        <p>Documenta todos los sistemas en funcionamiento</p>
-                        <input type="file" id="step4Photos" accept="image/*" multiple>
-                        <div id="step4PhotoGrid" class="photo-grid"></div>
-                    </div>
-                </div>
-
-                <div class="protocol-step" id="step5">
-                    <div class="step-header">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div class="step-number">5</div>
-                            <div>
-                                <h3>Segundo Contra-lavado</h3>
-                                <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em;">Limpieza post-tratamiento</p>
-                            </div>
-                        </div>
-                        <button class="btn btn-success" onclick="completeStep(5)">✅ Marcar Completado</button>
-                    </div>
-                    <div style="background: white; padding: 15px; margin: 15px 0; border: 1px solid #e8e8e8;">
-                        <p><strong>Procedimiento:</strong></p>
-                        <ul style="margin-left: 20px; margin-top: 10px;">
-                            <li>Realizar contra-lavado completo tras el período de contacto</li>
-                            <li>Eliminar residuos del tratamiento de choque</li>
-                            <li>Preparar el sistema para la normalización</li>
-                        </ul>
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha y Hora de Realización:</label>
-                        <input type="datetime-local" id="step5Date">
-                    </div>
-                    <div class="form-group">
-                        <label>Observaciones del Proceso:</label>
-                        <textarea id="step5Notes" rows="3" placeholder="Calidad del agua de salida, tiempo de contra-lavado, estado final..."></textarea>
-                    </div>
-                    <div class="photo-section">
-                        <h4>📸 Documentación Fotográfica</h4>
-                        <p>Documenta el proceso final de limpieza</p>
-                        <input type="file" id="step5Photos" accept="image/*" multiple>
-                        <div id="step5PhotoGrid" class="photo-grid"></div>
-                    </div>
-                </div>
-
-                <div class="protocol-step" id="step6">
-                    <div class="step-header">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div class="step-number">6</div>
-                            <div>
-                                <h3>Normalización</h3>
-                                <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em;">Vuelta a parámetros normales</p>
-                            </div>
-                        </div>
-                        <button class="btn btn-success" onclick="completeStep(6)">✅ Marcar Completado</button>
-                    </div>
-                    <div style="background: white; padding: 15px; margin: 15px 0; border: 1px solid #e8e8e8;">
-                        <p><strong>Parámetros Finales:</strong></p>
-                        <ul style="margin-left: 20px; margin-top: 10px;">
-                            <li>Reducir cloro libre a valores habituales (1-3 ppm)</li>
-                            <li>Verificar pH en rango normal (7.2-7.6)</li>
-                            <li>Confirmar que todos los parámetros son seguros</li>
-                            <li><strong>Solo entonces</strong> reabrir al público</li>
-                        </ul>
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha y Hora de Normalización:</label>
-                        <input type="datetime-local" id="step6Date">
-                    </div>
-                    <div class="form-group">
-                        <label>Cloro Libre Final (ppm):</label>
-                        <input type="number" id="step6Chlorine" step="0.1" min="1" max="3" placeholder="1.5">
-                    </div>
-                    <div class="form-group">
-                        <label>pH Final:</label>
-                        <input type="number" id="step6Ph" step="0.1" min="7.2" max="7.6" placeholder="7.4">
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha y Hora de Reapertura:</label>
-                        <input type="datetime-local" id="step6Reopening">
-                    </div>
-                    <div class="form-group">
-                        <label>Observaciones Finales:</label>
-                        <textarea id="step6Notes" rows="3" placeholder="Verificaciones finales, estado del agua, medidas adicionales..."></textarea>
-                    </div>
-                    <div class="photo-section">
-                        <h4>📸 Documentación Fotográfica</h4>
-                        <p>Documenta las mediciones finales y estado final de la piscina</p>
-                        <input type="file" id="step6Photos" accept="image/*" multiple>
-                        <div id="step6PhotoGrid" class="photo-grid"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 3: Seguimiento -->
-            <div id="tracking" class="tab-content">
-                <div class="card">
-                    <h2>📊 Seguimiento del Tratamiento</h2>
-                    <div id="trackingContent">
-                        <div class="alert alert-info">
-                            <strong>ℹ️ Información:</strong> Registra las mediciones periódicas durante el tratamiento para un seguimiento completo.
-                        </div>
-
-                        <div style="margin-bottom: 30px;">
-                            <h3>Mediciones Periódicas</h3>
-                            <table class="measurement-table">
-                                <thead>
-                                    <tr>
-                                        <th>Fecha/Hora</th>
-                                        <th>pH</th>
-                                        <th>Cloro Libre (ppm)</th>
-                                        <th>Cloro Combinado (ppm)</th>
-                                        <th>Temperatura (°C)</th>
-                                        <th>Observaciones</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="measurementTableBody">
-                                    <!-- Las mediciones se añadirán dinámicamente -->
-                                </tbody>
-                            </table>
-                            
-                            <button class="btn btn-primary" onclick="addMeasurement()">➕ Añadir Medición</button>
-                        </div>
-
-                        <div class="timeline" id="treatmentTimeline">
-                            <!-- Timeline items se añadirán dinámicamente -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 4: Informe -->
-            <div id="report" class="tab-content">
-                <div class="card">
-                    <h2>📄 Generación de Informes</h2>
-                    
-                    <div class="alert alert-success">
-                        <strong>✅ Listo para Exportar:</strong> Los informes incluirán todas las fotografías y documentación del tratamiento.
-                    </div>
-
-                    <div class="export-section">
-                        <h3>Opciones de Exportación</h3>
-                        <div class="export-buttons">
-                            <button class="btn btn-danger" onclick="exportToPDF()">📄 Generar Informe PDF Completo</button>
-                            <button class="btn btn-info" onclick="exportToWord()">📝 Generar Documento Word</button>
-                            <button class="btn btn-warning" onclick="exportData()">💾 Exportar Datos JSON</button>
-                        </div>
-                    </div>
-
-                    <div class="loading" id="exportLoading">
-                        <div class="spinner"></div>
-                        <p>Generando documento... Por favor espere.</p>
-                    </div>
-
-                    <div style="margin-top: 30px;">
-                        <h3>Resumen del Tratamiento</h3>
-                        <div id="treatmentSummary">
-                            <!-- El resumen se generará dinámicamente -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<header class="header">
+  <div class="header-title">
+    <div class="logo-icon">🔬</div>
+    <div>
+      <div class="app-name">FotoCalib</div>
+      <div class="app-sub">RD 3/2023 · RD 487/2022</div>
     </div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+    <div class="header-date" id="headerDate"></div>
+    <div id="syncStatus" style="font-family:var(--mono);font-size:10px;cursor:pointer;" onclick="openSettings()"></div>
+  </div>
+</header>
 
-    <!-- Modal para añadir mediciones -->
-    <div id="measurementModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; width: 90%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-            <h3>➕ Nueva Medición</h3>
-            <form id="measurementForm">
-                <div class="form-group">
-                    <label>Fecha y Hora:</label>
-                    <input type="datetime-local" id="measurementDateTime" required>
-                </div>
-                <div class="form-group">
-                    <label>pH:</label>
-                    <input type="number" id="measurementPh" step="0.1" min="0" max="14" required>
-                </div>
-                <div class="form-group">
-                    <label>Cloro Libre (ppm):</label>
-                    <input type="number" id="measurementFreeChlorine" step="0.1" min="0" required>
-                </div>
-                <div class="form-group">
-                    <label>Cloro Combinado (ppm):</label>
-                    <input type="number" id="measurementCombinedChlorine" step="0.1" min="0">
-                </div>
-                <div class="form-group">
-                    <label>Temperatura (°C):</label>
-                    <input type="number" id="measurementTemperature" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label>Observaciones:</label>
-                    <textarea id="measurementObservations" rows="2"></textarea>
-                </div>
-                <div style="text-align: right; margin-top: 20px;">
-                    <button type="button" class="btn btn-warning" onclick="closeMeasurementModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Guardar Medición</button>
-                </div>
-            </form>
-        </div>
+<!-- CONTENT -->
+
+<div class="content">
+
+  <!-- ===== PÁGINA: DASHBOARD ===== -->
+
+  <div class="page active" id="page-dashboard">
+    <div id="dashAlerts"></div>
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="section-label">Fotómetros activos</div>
+    <div id="dashDevices"></div>
+  </div>
+
+  <!-- ===== PÁGINA: FOTÓMETROS ===== -->
+
+  <div class="page" id="page-dispositivos">
+    <div class="filter-row">
+      <div class="chip active" data-filter="all" onclick="filterDevices(this)">Todos</div>
+      <div class="chip" data-filter="ok" onclick="filterDevices(this)">✓ OK</div>
+      <div class="chip" data-filter="warn" onclick="filterDevices(this)">⚠ Pendiente</div>
+      <div class="chip" data-filter="danger" onclick="filterDevices(this)">✗ Vencido</div>
     </div>
+    <div id="devicesList"></div>
+  </div>
 
-    <script>
-        // Variables globales para almacenar datos
-        let treatmentData = {
-            incident: {},
-            protocol: {
-                steps: [],
-                photos: {}
-            },
-            measurements: [],
-            startDate: null,
-            endDate: null
-        };
+  <!-- ===== PÁGINA: VERIFICACIONES ===== -->
 
-        let completedSteps = 0;
+  <div class="page" id="page-verificaciones">
+    <div class="filter-row">
+      <div class="chip active" data-filter="all" onclick="filterVerif(this)">Todas</div>
+      <div class="chip" data-filter="pass" onclick="filterVerif(this)">✓ Pasa</div>
+      <div class="chip" data-filter="fail" onclick="filterVerif(this)">✗ Falla</div>
+    </div>
+    <div id="verifList"></div>
+  </div>
 
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', function() {
-            loadStoredData();
-            setupPhotoHandlers();
-            updateProgress();
-            generateTreatmentSummary();
-            updateTimeline();
-        });
+  <!-- ===== PÁGINA: TRAZABILIDAD ===== -->
 
-        // Función para cambiar entre tabs
-        function switchTab(tabName) {
-            // Ocultar todos los contenidos
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Remover clase active de todos los tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Mostrar el contenido seleccionado
-            document.getElementById(tabName).classList.add('active');
-            
-            // Marcar el tab como activo
-            event.target.classList.add('active');
-        }
+  <div class="page" id="page-trazabilidad">
+    <div class="form-group" style="margin-bottom:14px;">
+      <select class="form-input" id="trazSelect" onchange="renderTrazabilidad()">
+        <option value="">— Selecciona fotómetro —</option>
+      </select>
+    </div>
+    <div id="trazContent"></div>
+  </div>
 
-        // Manejo del formulario de incidencia
-        document.getElementById('incidentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Verificar que los campos obligatorios estén completos
-            const poolName = document.getElementById('poolName').value.trim();
-            const detectionDate = document.getElementById('detectionDate').value;
-            const responsible = document.getElementById('responsible').value.trim();
-            
-            if (!poolName || !detectionDate || !responsible) {
-                alert('⚠️ Por favor, completa todos los campos obligatorios.');
-                return;
-            }
-            
-            // Capturar todos los datos del formulario
-            treatmentData.incident = {
-                poolName: poolName,
-                detectionDate: detectionDate,
-                responsible: responsible,
-                initialPh: document.getElementById('initialPh').value,
-                initialFreeChlorine: document.getElementById('initialFreeChlorine').value,
-                initialCombinedChlorine: document.getElementById('initialCombinedChlorine').value,
-                temperature: document.getElementById('temperature').value,
-                observations: document.getElementById('observations').value
-            };
-            
-            treatmentData.startDate = new Date();
-            saveData();
-            
-            alert('✅ Incidencia registrada correctamente. Procede con el protocolo de tratamiento.');
-            switchTab('protocol');
-        });
+</div><!-- /content -->
 
-        // Configurar manejadores de fotos
-        function setupPhotoHandlers() {
-            // Fotos de incidencia
-            document.getElementById('incidentPhotos').addEventListener('change', function(e) {
-                handlePhotoUpload(e, 'incidentPhotoGrid');
-            });
+<!-- FAB -->
 
-            // Fotos de pasos del protocolo
-            for (let i = 1; i <= 6; i++) {
-                document.getElementById(`step${i}Photos`).addEventListener('change', function(e) {
-                    handlePhotoUpload(e, `step${i}PhotoGrid`, `step${i}`);
-                });
-            }
-        }
+<button class="fab" id="fabBtn" onclick="openFab()">+</button>
 
-        // Manejo de subida de fotos
-        function handlePhotoUpload(event, gridId, stepId = null) {
-            const files = event.target.files;
-            const grid = document.getElementById(gridId);
-            
-            Array.from(files).forEach(file => {
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const photoItem = document.createElement('div');
-                        photoItem.className = 'photo-item';
-                        
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.alt = 'Foto del tratamiento';
-                        
-                        const deleteBtn = document.createElement('button');
-                        deleteBtn.className = 'delete-photo';
-                        deleteBtn.innerHTML = '×';
-                        deleteBtn.onclick = function() {
-                            photoItem.remove();
-                            if (stepId) {
-                                saveStepPhotos(stepId);
-                            }
-                        };
-                        
-                        photoItem.appendChild(img);
-                        photoItem.appendChild(deleteBtn);
-                        grid.appendChild(photoItem);
-                        
-                        // Guardar en datos del tratamiento
-                        if (stepId) {
-                            if (!treatmentData.protocol.photos[stepId]) {
-                                treatmentData.protocol.photos[stepId] = [];
-                            }
-                            treatmentData.protocol.photos[stepId].push(e.target.result);
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
+<!-- BOTTOM NAV -->
 
-        // Completar paso del protocolo
-        function completeStep(stepNumber) {
-            const stepElement = document.getElementById(`step${stepNumber}`);
-            let dateInput = document.getElementById(`step${stepNumber}Date`);
-            const notesInput = document.getElementById(`step${stepNumber}Notes`);
-            
-            // Para el paso 3, usar la fecha de inicio como referencia principal
-            if (stepNumber === 3) {
-                const startDateInput = document.getElementById('step3DateStart');
-                const endDateInput = document.getElementById('step3DateEnd');
-                const chlorineInput = document.getElementById('step3Chlorine');
-                const phInput = document.getElementById('step3Ph');
-                
-                if (!startDateInput.value) {
-                    alert('⚠️ Por favor, ingresa la fecha y hora de inicio del tratamiento de choque.');
-                    startDateInput.focus();
-                    return;
-                }
-                if (!endDateInput.value) {
-                    alert('⚠️ Por favor, ingresa la fecha y hora de finalización del tratamiento de choque.');
-                    endDateInput.focus();
-                    return;
-                }
-                if (!chlorineInput.value || chlorineInput.value < 20 || chlorineInput.value > 30) {
-                    alert('⚠️ Por favor, ingresa el nivel de cloro libre alcanzado (debe estar entre 20-30 ppm).');
-                    chlorineInput.focus();
-                    return;
-                }
-                if (!phInput.value || phInput.value < 7.2 || phInput.value > 7.5) {
-                    alert('⚠️ Por favor, ingresa el pH final (debe estar entre 7.2-7.5).');
-                    phInput.focus();
-                    return;
-                }
-                dateInput = startDateInput; // Usar fecha de inicio como referencia
-            } else if (!dateInput.value) {
-                alert('⚠️ Por favor, ingresa la fecha y hora de realización del paso.');
-                dateInput.focus();
-                return;
-            }
-            
-            stepElement.classList.add('completed');
-            
-            // Guardar datos del paso
-            const stepData = {
-                number: stepNumber,
-                completed: true,
-                date: dateInput.value,
-                notes: notesInput.value,
-                timestamp: new Date()
-            };
-            
-            // Si es el paso 3, guardar mediciones adicionales
-            if (stepNumber === 3) {
-                stepData.chlorine = document.getElementById('step3Chlorine').value;
-                stepData.ph = document.getElementById('step3Ph').value;
-                stepData.startDate = document.getElementById('step3DateStart').value;
-                stepData.endDate = document.getElementById('step3DateEnd').value;
-            }
-            
-            // Si es el paso 4, guardar sistemas activados
-            if (stepNumber === 4) {
-                stepData.systems = document.getElementById('step4Systems').value;
-            }
-            
-            // Si es el paso 6, guardar datos finales
-            if (stepNumber === 6) {
-                stepData.finalChlorine = document.getElementById('step6Chlorine').value;
-                stepData.finalPh = document.getElementById('step6Ph').value;
-                stepData.reopeningDate = document.getElementById('step6Reopening').value;
-                treatmentData.endDate = new Date();
-            }
-            
-            // Actualizar array de pasos
-            const existingStepIndex = treatmentData.protocol.steps.findIndex(s => s.number === stepNumber);
-            if (existingStepIndex >= 0) {
-                treatmentData.protocol.steps[existingStepIndex] = stepData;
-            } else {
-                treatmentData.protocol.steps.push(stepData);
-            }
-            
-            // Actualizar progreso
-            completedSteps = treatmentData.protocol.steps.filter(s => s.completed).length;
-            updateProgress();
-            
-            // Guardar datos
-            saveData();
-            
-            // Actualizar timeline
-            updateTimeline();
-            
-            alert(`✅ Paso ${stepNumber} completado correctamente.`);
-        }
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="showPage('dashboard', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </button>
+  <button class="nav-btn nav-alert" onclick="showPage('dispositivos', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2m-3.5-6.5-1.4 1.4M6.9 17.1l-1.4 1.4m0-12.8 1.4 1.4m8.8 8.8 1.4 1.4"/></svg>
+    Fotómetros
+  </button>
+  <button class="nav-btn" onclick="showPage('verificaciones', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Registros
+  </button>
+  <button class="nav-btn" onclick="showPage('trazabilidad', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Trazab.
+  </button>
+</nav>
 
-        // Actualizar barra de progreso
-        function updateProgress() {
-            const progressFill = document.getElementById('protocolProgress');
-            const progressText = document.getElementById('progressText');
-            
-            const percentage = (completedSteps / 6) * 100;
-            progressFill.style.width = percentage + '%';
-            progressText.textContent = completedSteps;
-        }
+<!-- MODAL: NUEVO FOTÓMETRO -->
 
-        // Añadir medición
-        function addMeasurement() {
-            document.getElementById('measurementModal').style.display = 'block';
-            document.getElementById('measurementDateTime').value = new Date().toISOString().slice(0, 16);
-        }
+<div class="modal-overlay" id="modalFotometro">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📟 <span id="mFotoTitle">Nuevo Fotómetro</span></div>
+    <input type="hidden" id="mFotoId">
+    <div class="form-group">
+      <label class="form-label">Nombre / Modelo</label>
+      <input type="text" class="form-input" id="mFotoNombre" placeholder="Ej: Hanna HI97701 #1">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nº Serie</label>
+        <input type="text" class="form-input" id="mFotoSerie" placeholder="SN-12345">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parámetro</label>
+        <select class="form-input" id="mFotoParam">
+          <option>Cloro libre</option>
+          <option>Cloro total</option>
+          <option>Cloro libre + Total</option>
+          <option>pH</option>
+          <option>Turbidez</option>
+          <option>Amonio</option>
+          <option>Dióxido de cloro</option>
+          <option>Multiparámetro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Ubicación</label>
+        <input type="text" class="form-input" id="mFotoUbic" placeholder="Depósito 1, ACS...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado</label>
+        <select class="form-input" id="mFotoEstado">
+          <option value="activo">Activo</option>
+          <option value="baja">Baja</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-divider"></div>
+    <div class="section-label" style="margin-top:0">Calibración anual</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Última calibración</label>
+        <input type="date" class="form-input" id="mFotoCalFecha">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Laboratorio</label>
+        <input type="text" class="form-input" id="mFotoLab" placeholder="Nombre laboratorio">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nº Certificado calibración</label>
+      <input type="text" class="form-input" id="mFotoCert" placeholder="CERT-2024-001">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas</label>
+      <textarea class="form-input" id="mFotoNotas" placeholder="Observaciones..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn btn-secondary" onclick="closeModal('modalFotometro')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFotometro()">Guardar</button>
+    </div>
+  </div>
+</div>
 
-        // Cerrar modal de medición
-        function closeMeasurementModal() {
-            const modal = document.getElementById('measurementModal');
-            const form = document.getElementById('measurementForm');
-            
-            modal.style.display = 'none';
-            form.reset();
-            
-            // Limpiar campos específicos por si hay problemas con reset()
-            document.getElementById('measurementDateTime').value = '';
-            document.getElementById('measurementPh').value = '';
-            document.getElementById('measurementFreeChlorine').value = '';
-            document.getElementById('measurementCombinedChlorine').value = '';
-            document.getElementById('measurementTemperature').value = '';
-            document.getElementById('measurementObservations').value = '';
-        }
+<!-- MODAL: VERIFICACIÓN MENSUAL -->
 
-        // Manejo del formulario de medición
-        document.getElementById('measurementForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Validar campos obligatorios
-            const datetime = document.getElementById('measurementDateTime').value;
-            const ph = document.getElementById('measurementPh').value;
-            const freeChlorine = document.getElementById('measurementFreeChlorine').value;
-            
-            if (!datetime || !ph || !freeChlorine) {
-                alert('⚠️ Por favor, completa los campos obligatorios: Fecha/Hora, pH y Cloro Libre.');
-                return;
-            }
-            
-            const measurement = {
-                datetime: datetime,
-                ph: parseFloat(ph),
-                freeChlorine: parseFloat(freeChlorine),
-                combinedChlorine: document.getElementById('measurementCombinedChlorine').value ? parseFloat(document.getElementById('measurementCombinedChlorine').value) : null,
-                temperature: document.getElementById('measurementTemperature').value ? parseFloat(document.getElementById('measurementTemperature').value) : null,
-                observations: document.getElementById('measurementObservations').value || '',
-                timestamp: new Date()
-            };
-            
-            treatmentData.measurements.push(measurement);
-            saveData();
-            updateMeasurementTable();
-            updateTimeline();
-            
-            // Cerrar modal y limpiar formulario
-            closeMeasurementModal();
-            
-            alert('✅ Medición añadida correctamente.');
-        });
+<div class="modal-overlay" id="modalVerif">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🧪 Nueva Verificación Mensual</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fotómetro</label>
+        <select class="form-input" id="mVerifFoto"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input type="date" class="form-input" id="mVerifFecha">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Referencia patrón / Kit CAL CHECK</label>
+      <input type="text" class="form-input" id="mVerifPatron" placeholder="Ej: HI97701-11, lote 24B03">
+    </div>
+    <div class="form-divider"></div>
+    <div class="section-label" style="margin-top:0">Resultados por parámetro</div>
+    <div id="verifParams">
+      <div class="form-group">
+        <label class="form-label">Parámetro 1</label>
+        <div class="result-row">
+          <div>
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-input param-name" placeholder="Ej: Cloro libre">
+          </div>
+          <div>
+            <label class="form-label">Valor patrón → obtenido</label>
+            <input type="text" class="form-input param-val" placeholder="1.00 → 1.02 mg/L">
+          </div>
+          <div>
+            <label class="form-label">OK</label>
+            <div class="result-status" onclick="toggleStatus(this)" title="Toca para cambiar">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-bottom:10px;" onclick="addParamRow()">+ Parámetro</button>
+    <div class="form-group">
+      <label class="form-label">Técnico</label>
+      <input type="text" class="form-input" id="mVerifTecnico" placeholder="Nombre del técnico">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observaciones</label>
+      <textarea class="form-input" id="mVerifNotas" placeholder="Notas, acciones correctoras..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn btn-secondary" onclick="closeModal('modalVerif')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveVerificacion()">Guardar</button>
+    </div>
+  </div>
+</div>
 
-        // Actualizar tabla de mediciones
-        function updateMeasurementTable() {
-            const tbody = document.getElementById('measurementTableBody');
-            tbody.innerHTML = '';
-            
-            treatmentData.measurements.forEach((measurement, index) => {
-                const row = tbody.insertRow();
-                
-                const date = new Date(measurement.datetime);
-                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-                
-                row.innerHTML = `
-                    <td>${formattedDate}</td>
-                    <td>${measurement.ph}</td>
-                    <td>${measurement.freeChlorine}</td>
-                    <td>${measurement.combinedChlorine || '-'}</td>
-                    <td>${measurement.temperature || '-'}</td>
-                    <td>${measurement.observations || '-'}</td>
-                    <td>
-                        <button class="btn btn-danger" onclick="deleteMeasurement(${index})" style="padding: 5px 10px; font-size: 0.8em;">🗑️</button>
-                    </td>
-                `;
-            });
-        }
+<!-- MODAL FAB SELECTOR -->
 
-        // Eliminar medición
-        function deleteMeasurement(index) {
-            if (confirm('¿Estás seguro de que quieres eliminar esta medición?')) {
-                treatmentData.measurements.splice(index, 1);
-                saveData();
-                updateMeasurementTable();
-                updateTimeline();
-            }
-        }
+<div class="modal-overlay" id="modalFab">
+  <div class="modal" style="padding-bottom:20px;">
+    <div class="modal-handle"></div>
+    <div class="modal-title">¿Qué quieres hacer?</div>
+    <div class="section-label" style="margin-top:0">Añadir registro</div>
+    <button class="btn btn-secondary btn-full" onclick="closeModal('modalFab'); openFotometro()">📟 Nuevo Fotómetro</button>
+    <button class="btn btn-secondary btn-full" onclick="closeModal('modalFab'); openVerif()">🧪 Verificación Mensual</button>
+    <button class="btn btn-secondary btn-full" onclick="closeModal('modalFab'); openCalAnual()">📋 Calibración Anual (registro)</button>
+    <div class="section-label">Exportar</div>
+    <button class="btn btn-secondary btn-full" onclick="closeModal('modalFab'); exportCSV()">📊 Exportar CSV</button>
+    <button class="btn btn-secondary btn-full" onclick="closeModal('modalFab'); exportPDF()">🖨️ Generar PDF / Imprimir</button>
+    <div class="section-label">Configuración</div>
+    <button class="btn btn-secondary btn-full" onclick="closeModal('modalFab'); openSettings()">⚙️ Conexión GitHub</button>
+    <button class="btn btn-secondary btn-full" onclick="closeModal('modalFab'); loadFromGitHub().then(()=>renderAll())">🔄 Sincronizar ahora</button>
+  </div>
+</div>
 
-        // Actualizar timeline
-        function updateTimeline() {
-            const timeline = document.getElementById('treatmentTimeline');
-            timeline.innerHTML = '';
-            
-            // Combinar eventos del protocolo y mediciones
-            const events = [];
-            
-            // Eventos del protocolo
-            treatmentData.protocol.steps.forEach(step => {
-                if (step.completed) {
-                    events.push({
-                        type: 'protocol',
-                        date: new Date(step.date),
-                        title: `Paso ${step.number} completado`,
-                        description: step.notes || 'Sin observaciones adicionales'
-                    });
-                }
-            });
-            
-            // Eventos de mediciones
-            treatmentData.measurements.forEach(measurement => {
-                events.push({
-                    type: 'measurement',
-                    date: new Date(measurement.datetime),
-                    title: 'Medición registrada',
-                    description: `pH: ${measurement.ph}, Cloro: ${measurement.freeChlorine} ppm`
-                });
-            });
-            
-            // Ordenar eventos por fecha
-            events.sort((a, b) => a.date - b.date);
-            
-            // Generar timeline
-            events.forEach(event => {
-                const timelineItem = document.createElement('div');
-                timelineItem.className = 'timeline-item';
-                
-                const formattedDate = event.date.toLocaleDateString() + ' ' + event.date.toLocaleTimeString();
-                
-                timelineItem.innerHTML = `
-                    <h4>${event.title}</h4>
-                    <p><strong>Fecha:</strong> ${formattedDate}</p>
-                    <p>${event.description}</p>
-                `;
-                
-                timeline.appendChild(timelineItem);
-            });
-        }
+<!-- MODAL: CALIBRACIÓN ANUAL (registro adicional) -->
 
-        // Generar resumen del tratamiento
-        function generateTreatmentSummary() {
-            const summary = document.getElementById('treatmentSummary');
-            
-            const totalSteps = treatmentData.protocol.steps.length;
-            const totalMeasurements = treatmentData.measurements.length;
-            const totalPhotos = Object.values(treatmentData.protocol.photos).reduce((total, photos) => total + photos.length, 0);
-            
-            let duration = 'En curso';
-            if (treatmentData.startDate && treatmentData.endDate) {
-                const diff = new Date(treatmentData.endDate) - new Date(treatmentData.startDate);
-                const hours = Math.floor(diff / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                duration = `${hours}h ${minutes}m`;
-            }
-            
-            summary.innerHTML = `
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                    <div class="card" style="text-align: center; margin: 0;">
-                        <h4>Pasos Completados</h4>
-                        <p style="font-size: 2em; color: #27ae60; margin: 10px 0;">${completedSteps}/6</p>
-                    </div>
-                    <div class="card" style="text-align: center; margin: 0;">
-                        <h4>Mediciones</h4>
-                        <p style="font-size: 2em; color: #3498db; margin: 10px 0;">${totalMeasurements}</p>
-                    </div>
-                    <div class="card" style="text-align: center; margin: 0;">
-                        <h4>Fotografías</h4>
-                        <p style="font-size: 2em; color: #f39c12; margin: 10px 0;">${totalPhotos}</p>
-                    </div>
-                    <div class="card" style="text-align: center; margin: 0;">
-                        <h4>Duración</h4>
-                        <p style="font-size: 2em; color: #e74c3c; margin: 10px 0;">${duration}</p>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 20px;">
-                    <h4>Estado del Protocolo:</h4>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${(completedSteps / 6) * 100}%"></div>
-                    </div>
-                    <p>${completedSteps === 6 ? '✅ Protocolo completado' : `⏳ ${6 - completedSteps} pasos pendientes`}</p>
-                </div>
-            `;
-        }
+<div class="modal-overlay" id="modalCalAnual">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📋 Calibración Anual</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fotómetro</label>
+        <select class="form-input" id="mCalFoto"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha calibración</label>
+        <input type="date" class="form-input" id="mCalFecha">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Laboratorio acreditado</label>
+        <input type="text" class="form-input" id="mCalLab" placeholder="Nombre laboratorio">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nº Certificado</label>
+        <input type="text" class="form-input" id="mCalCert" placeholder="CERT-2024-001">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Incertidumbre / Resultado</label>
+      <input type="text" class="form-input" id="mCalResultado" placeholder="Ej: ±0.02 mg/L, dentro de especificación">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Válida hasta</label>
+      <input type="date" class="form-input" id="mCalVigencia">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observaciones</label>
+      <textarea class="form-input" id="mCalNotas" placeholder=""></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn btn-secondary" onclick="closeModal('modalCalAnual')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCalAnual()">Guardar</button>
+    </div>
+  </div>
+</div>
 
-        // Exportar a PDF
-        async function exportToPDF() {
-            try {
-                // Verificar que jsPDF está disponible
-                if (!window.jspdf) {
-                    throw new Error('jsPDF library not loaded');
-                }
-                
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                showLoading();
-                
-                console.log('Iniciando generación PDF...');
-                console.log('TreatmentData inicial:', treatmentData);
-                
-                // Verificar que tenemos datos mínimos
-                if (!treatmentData.incident || !treatmentData.incident.poolName) {
-                    throw new Error('Debe registrar una incidencia antes de generar el informe');
-                }
-                
-                // Inicializar datos faltantes
-                if (!treatmentData.protocol) {
-                    treatmentData.protocol = { steps: [], photos: {} };
-                }
-                if (!treatmentData.measurements) {
-                    treatmentData.measurements = [];
-                }
-                
-                console.log('Datos inicializados correctamente');
-                // Configuración inicial
-                let yPosition = 20;
-                const pageHeight = doc.internal.pageSize.height;
-                const margin = 20;
-                
-                // Función para añadir nueva página si es necesario
-                function checkPageBreak(neededHeight = 20) {
-                    if (yPosition + neededHeight > pageHeight - margin) {
-                        doc.addPage();
-                        yPosition = 20;
-                        return true;
-                    }
-                    return false;
-                }
-                
-                // Función para añadir texto con control de páginas
-                function addTextWithPageBreak(text, x, y, maxWidth = 170, lineHeight = 5) {
-                    const lines = doc.splitTextToSize(text, maxWidth);
-                    const totalHeight = lines.length * lineHeight;
-                    
-                    // Verificar si necesitamos nueva página
-                    if (checkPageBreak(totalHeight)) {
-                        y = yPosition;
-                    } else {
-                        yPosition = y;
-                    }
-                    
-                    doc.text(lines, x, yPosition);
-                    yPosition += totalHeight;
-                    return yPosition;
-                }
-                
-                // Encabezado del documento
-                doc.setFontSize(22);
-                doc.setTextColor(44, 62, 80);
-                doc.text('MEMORIA TÉCNICA', 20, yPosition);
-                yPosition += 10;
-                doc.text('TRATAMIENTO DE PSEUDOMONAS AERUGINOSA', 20, yPosition);
-                yPosition += 15;
-                
-                doc.setFontSize(12);
-                doc.setTextColor(100, 100, 100);
-                doc.text(`Fecha de elaboración: ${new Date().toLocaleDateString()}`, 20, yPosition);
-                yPosition += 8;
-                doc.text(`Instalación: ${treatmentData.incident.poolName || 'No especificada'}`, 20, yPosition);
-                yPosition += 8;
-                doc.text(`Responsable: ${treatmentData.incident.responsible || 'No especificado'}`, 20, yPosition);
-                yPosition += 25;
-                
-                // RESUMEN EJECUTIVO
-                console.log('Generando resumen ejecutivo...');
-                checkPageBreak(40);
-                doc.setFontSize(16);
-                doc.setTextColor(0, 0, 0);
-                doc.text('RESUMEN EJECUTIVO', 20, yPosition);
-                yPosition += 12;
-                
-                doc.setFontSize(11);
-                // Manejo seguro de fechas
-                let detectionDate = 'No especificada';
-                if (treatmentData.incident.detectionDate) {
-                    try {
-                        detectionDate = new Date(treatmentData.incident.detectionDate).toLocaleDateString();
-                    } catch (e) {
-                        detectionDate = treatmentData.incident.detectionDate;
-                    }
-                }
-                
-                const currentCompletedSteps = treatmentData.protocol.steps ? treatmentData.protocol.steps.filter(s => s.completed).length : 0;
-                const protocolStatus = currentCompletedSteps === 6 ? 'completado exitosamente' : `en curso (${currentCompletedSteps}/6 pasos completados)`;
-                
-                const executiveSummary = `El presente documento constituye la memoria técnica del tratamiento de desinfección aplicado contra Pseudomonas aeruginosa en la instalación ${treatmentData.incident.poolName || 'especificada'}. La detección de la bacteria patógena se produjo el ${detectionDate}, procediéndose inmediatamente al cierre de la instalación según normativa vigente.
+<!-- MODAL: DETALLE FOTÓMETRO -->
 
-El protocolo de actuación ha sido ${protocolStatus}, siguiendo estrictamente las directrices establecidas para la eliminación de Pseudomonas aeruginosa. Todos los procedimientos han sido documentados detalladamente, incluyendo mediciones de parámetros fisicoquímicos y registros fotográficos del proceso.
+<div class="modal-overlay" id="modalDetalle">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="detalleContent"></div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn btn-danger btn-icon" onclick="confirmDelete()" title="Eliminar">🗑</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal('modalDetalle')">Cerrar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="editFotometro()">Editar</button>
+    </div>
+  </div>
+</div>
 
-${currentCompletedSteps === 6 ? 'La instalación ha sido normalizada y se encuentra en condiciones óptimas para su reapertura al público.' : 'El tratamiento se encuentra en fase de ejecución, manteniéndose la instalación cerrada hasta completar todos los pasos del protocolo.'}`;
-                
-                yPosition = addTextWithPageBreak(executiveSummary, 20, yPosition) + 15;
-                
-                // 1. ANTECEDENTES Y DETECCIÓN
-                checkPageBreak(40);
-                doc.setFontSize(16);
-                doc.setTextColor(0, 0, 0);
-                doc.text('1. ANTECEDENTES Y DETECCIÓN', 20, yPosition);
-                yPosition += 12;
-                
-                doc.setFontSize(11);
-                const detectionText = `La presencia de Pseudomonas aeruginosa fue detectada el ${treatmentData.incident.detectionDate ? new Date(treatmentData.incident.detectionDate).toLocaleDateString() : 'fecha no especificada'} en la instalación ${treatmentData.incident.poolName || 'objeto del presente informe'}. 
+<!-- MODAL: CONFIGURACIÓN GITHUB -->
 
-Según establece la normativa vigente, se procedió inmediatamente al cierre de la instalación al públicos y se inició el protocolo de desinfección correspondiente bajo la supervisión de ${treatmentData.incident.responsible || 'personal cualificado'}.
+<div class="modal-overlay" id="modalSettings">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚙️ Conexión GitHub</div>
+    <div style="background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.2);border-radius:8px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.6;">
+      Los datos se guardan en <span style="color:var(--accent);font-family:var(--mono)">MikiMauZ/Pseudos/fotometro.json</span>.<br>
+      Necesitas un <strong style="color:var(--text)">Personal Access Token</strong> de GitHub con permiso <span style="font-family:var(--mono);color:var(--accent2)">repo</span> para poder escribir.
+    </div>
+    <div id="sandboxWarning" style="display:none;background:rgba(255,184,0,0.1);border:1px solid rgba(255,184,0,0.3);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--warn);line-height:1.6;">
+      ⚠️ <strong>Estás dentro de Claude.ai.</strong> Las llamadas a GitHub están bloqueadas por seguridad.<br>
+      <span style="color:var(--text2)">Guarda el token aquí y abre el archivo en <strong style="color:var(--text)">Safari</strong> o en <strong style="color:var(--text)">GitHub Pages</strong> para que funcione.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label">GitHub Personal Access Token (PAT)</label>
+      <input type="password" class="form-input" id="sToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+      <div style="font-size:11px;color:var(--text2);margin-top:5px;">Settings → Developer settings → Personal access tokens → Tokens (classic) → scope: <code>repo</code></div>
+    </div>
+    <div id="settingsStatus" style="font-size:12px;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="closeModal('modalSettings')">Cancelar</button>
+      <button class="btn btn-ghost" onclick="testGitHub()">🔗 Probar conexión</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Guardar</button>
+    </div>
+  </div>
+</div>
 
-Los parámetros fisicoquímicos registrados en el momento de la detección fueron los siguientes:
-- pH del agua: ${treatmentData.incident.initialPh || 'No medido'}
-- Cloro libre residual: ${treatmentData.incident.initialFreeChlorine || 'No medido'} ppm
-- Cloro combinado: ${treatmentData.incident.initialCombinedChlorine || 'No medido'} ppm
-- Temperatura del agua: ${treatmentData.incident.temperature || 'No medida'}°C
+<!-- CONFIRM DIALOG -->
 
-${treatmentData.incident.observations ? `Observaciones adicionales del estado inicial: ${treatmentData.incident.observations}` : ''}`;
-                
-                yPosition = addTextWithPageBreak(detectionText, 20, yPosition) + 15;
-                
-                // 2. METODOLOGÍA Y PROCEDIMIENTOS APLICADOS
-                checkPageBreak(40);
-                doc.setFontSize(16);
-                doc.setTextColor(0, 0, 0);
-                doc.text('2. METODOLOGÍA Y PROCEDIMIENTOS APLICADOS', 20, yPosition);
-                yPosition += 12;
-                
-                doc.setFontSize(11);
-                const methodologyText = `El tratamiento aplicado sigue estrictamente el protocolo oficial establecido para la eliminación de Pseudomonas aeruginosa en instalaciones acuáticas. Este protocolo consta de seis etapas diferenciadas, cada una de ellas crítica para garantizar la completa desinfección de la instalación y la seguridad de los usuarios.
+<div class="confirm-dialog" id="confirmDialog">
+  <div class="confirm-box">
+    <div class="confirm-icon">⚠️</div>
+    <div class="confirm-title">¿Eliminar fotómetro?</div>
+    <div class="confirm-msg">Se borrarán también todas sus verificaciones y calibraciones. Esta acción no se puede deshacer.</div>
+    <div class="confirm-btns">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger" style="flex:1" onclick="doDelete()">Eliminar</button>
+    </div>
+  </div>
+</div>
 
-La metodología implementada se basa en la aplicación de un tratamiento de choque con hipoclorito, manteniendo un valor CT (concentración × tiempo) de 3.600, seguido de procedimientos de limpieza y normalización que aseguran la eliminación total del patógeno tanto del agua como de todas las superficies y sistemas de la instalación.`;
-                
-                yPosition = addTextWithPageBreak(methodologyText, 20, yPosition) + 15;
-                
-                // Descripción detallada de cada paso
-                const stepDescriptions = [
-                    {
-                        name: 'Limpieza General Completa',
-                        description: 'Se procedió a la limpieza exhaustiva de todas las superficies de la instalación, incluyendo fondo de piscina, rebosaderos perimetrales, skimmers y sistema de prefiltrado. Esta etapa es fundamental para eliminar la materia orgánica que pueda interferir en la eficacia del tratamiento de desinfección posterior.'
-                    },
-                    {
-                        name: 'Contra-lavado de Filtros',
-                        description: 'Se realizó un contra-lavado completo del sistema de filtración con el objetivo de eliminar los residuos acumulados y preparar el sistema para el tratamiento de choque. Este procedimiento garantiza la máxima eficiencia del sistema durante la fase de hipercloración.'
-                    },
-                    {
-                        name: 'Tratamiento de Choque - Hipercloración',
-                        description: 'Se elevó la concentración de cloro libre residual hasta 20-30 ppm, manteniendo este nivel durante un período de 2-3 horas para alcanzar el valor CT requerido de 3.600. Durante todo el proceso se controló que el pH se mantuviera en el rango óptimo de 7,2-7,5 para maximizar la eficacia del desinfectante.'
-                    },
-                    {
-                        name: 'Hipercloración del Sistema Completo',
-                        description: 'Se aseguró que el agua hiperclorada circulara por todo el sistema de tratamiento, incluyendo la activación de by-pass, cascadas, jets y soplantes cuando existían. Este procedimiento crítico garantiza que todas las partes del sistema, incluidas aquellas normalmente paradas, queden expuestas a la solución desinfectante.'
-                    },
-                    {
-                        name: 'Segundo Contra-lavado',
-                        description: 'Una vez transcurrido el tiempo de contacto necesario, se procedió a un nuevo contra-lavado del sistema de filtración para eliminar los residuos generados durante el tratamiento de choque y preparar la instalación para la fase de normalización.'
-                    },
-                    {
-                        name: 'Normalización y Puesta en Servicio',
-                        description: 'Finalmente, se procedió a la normalización de los parámetros del agua, reduciendo gradualmente la concentración de cloro libre hasta los valores habituales de operación (1-3 ppm) y verificando que todos los parámetros fisicoquímicos se encontraran dentro de los rangos establecidos antes de proceder a la reapertura de la instalación.'
-                    }
-                ];
-                
-                console.log('Generando sección de pasos del protocolo...');
-                console.log('Número de pasos:', (treatmentData.protocol.steps || []).length);
-                
-                (treatmentData.protocol.steps || []).forEach((step, index) => {
-                    console.log(`Procesando paso ${step.number}:`, step);
-                    const stepDesc = stepDescriptions[step.number - 1];
-                    
-                    if (!stepDesc) {
-                        console.warn(`No se encontró descripción para el paso ${step.number}`);
-                        return;
-                    }
-                    
-                    checkPageBreak(50);
-                    
-                    doc.setFontSize(14);
-                    doc.setFont(undefined, 'bold');
-                    doc.text(`2.${step.number}. ${stepDesc.name}`, 20, yPosition);
-                    yPosition += 10;
-                    
-                    doc.setFontSize(11);
-                    doc.setFont(undefined, 'normal');
-                    yPosition = addTextWithPageBreak(stepDesc.description, 20, yPosition) + 8;
-                    
-                    if (step.completed) {
-                        doc.setFont(undefined, 'bold');
-                        doc.text(`Estado: COMPLETADO`, 25, yPosition);
-                        yPosition += 6;
-                        doc.setFont(undefined, 'normal');
-                        
-                        if (step.date) {
-                            doc.text(`Fecha de ejecución: ${new Date(step.date).toLocaleString()}`, 25, yPosition);
-                            yPosition += 6;
-                        }
-                        
-                        // Datos específicos del paso 3
-                        if (step.number === 3) {
-                            if (step.chlorine) {
-                                doc.text(`Concentración de cloro libre alcanzada: ${step.chlorine} ppm`, 25, yPosition);
-                                yPosition += 6;
-                            }
-                            if (step.ph) {
-                                doc.text(`pH mantenido durante el tratamiento: ${step.ph}`, 25, yPosition);
-                                yPosition += 6;
-                            }
-                            if (step.startDate && step.endDate) {
-                                const duration = (new Date(step.endDate) - new Date(step.startDate)) / (1000 * 60 * 60);
-                                doc.text(`Duración del tratamiento: ${duration.toFixed(1)} horas`, 25, yPosition);
-                                yPosition += 6;
-                            }
-                        }
-                        
-                        // Datos específicos del paso 6
-                        if (step.number === 6) {
-                            if (step.finalChlorine) {
-                                doc.text(`Cloro libre residual final: ${step.finalChlorine} ppm`, 25, yPosition);
-                                yPosition += 6;
-                            }
-                            if (step.finalPh) {
-                                doc.text(`pH final tras normalización: ${step.finalPh}`, 25, yPosition);
-                                yPosition += 6;
-                            }
-                            if (step.reopeningDate) {
-                                doc.text(`Fecha de reapertura autorizada: ${new Date(step.reopeningDate).toLocaleString()}`, 25, yPosition);
-                                yPosition += 6;
-                            }
-                        }
-                        
-                        if (step.notes) {
-                            doc.text('Observaciones técnicas:', 25, yPosition);
-                            yPosition += 6;
-                            yPosition = addTextWithPageBreak(step.notes, 25, yPosition, 165);
-                        }
-                    } else {
-                        doc.setFont(undefined, 'bold');
-                        doc.setTextColor(200, 0, 0);
-                        doc.text(`Estado: PENDIENTE DE EJECUCIÓN`, 25, yPosition);
-                        doc.setTextColor(0, 0, 0);
-                        yPosition += 6;
-                    }
-                    
-                    yPosition += 12;
-                });
-                
-                // 3. CONTROL Y SEGUIMIENTO ANALÍTICO
-                if (treatmentData.measurements.length > 0) {
-                    checkPageBreak(40);
-                    doc.setFontSize(16);
-                    doc.setTextColor(0, 0, 0);
-                    doc.text('3. CONTROL Y SEGUIMIENTO ANALÍTICO', 20, yPosition);
-                    yPosition += 12;
-                    
-                    doc.setFontSize(11);
-                    const monitoringText = `Durante el desarrollo del tratamiento se han realizado ${treatmentData.measurements.length} controles analíticos para verificar la eficacia del proceso y asegurar el cumplimiento de los parámetros establecidos. Estas mediciones han permitido realizar un seguimiento continuo de la evolución de los parámetros fisicoquímicos y ajustar el tratamiento según las necesidades detectadas.
+<script>
+// ============================================================
+//  CONFIG GITHUB
+// ============================================================
+const GH = {
+  owner: 'MikiMauZ',
+  repo: 'Pseudos',
+  path: 'fotometro.json',
+  branch: 'main',
+  get token() { return localStorage.getItem('fc_gh_token') || ''; },
+  get apiUrl() { return `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${this.path}`; },
+  get rawUrl() { return `https://raw.githubusercontent.com/${this.owner}/${this.repo}/${this.branch}/${this.path}`; }
+};
 
-Los controles realizados han abarcado la medición de pH, concentración de cloro libre residual, cloro combinado y temperatura del agua, parámetros críticos para evaluar tanto la eficacia del desinfectante como las condiciones de seguridad para los usuarios una vez finalizado el tratamiento.`;
-                    
-                    yPosition = addTextWithPageBreak(monitoringText, 20, yPosition) + 15;
-                }
-                
-                // 4. CONCLUSIONES Y RESULTADOS
-                checkPageBreak(40);
-                doc.setFontSize(16);
-                doc.setTextColor(0, 0, 0);
-                doc.text('4. CONCLUSIONES Y RESULTADOS', 20, yPosition);
-                yPosition += 12;
-                
-                doc.setFontSize(11);
-                const currentStepCount = treatmentData.protocol.steps ? treatmentData.protocol.steps.filter(s => s.completed).length : 0;
-                const conclusionsText = currentStepCount === 6 ? 
-                    `El tratamiento de desinfección contra Pseudomonas aeruginosa ha sido ejecutado completamente y con éxito, habiendo completado las seis etapas establecidas en el protocolo oficial. 
+// SHA del archivo actual (necesario para escribir en GitHub)
+let ghFileSha = null;
 
-Todos los procedimientos se han realizado conforme a la normativa vigente, manteniendo los parámetros fisicoquímicos dentro de los rangos establecidos y documentando exhaustivamente cada fase del proceso. La instalación ha sido normalizada y se encuentra en condiciones óptimas para su reapertura al público.
+// Cache local de los datos
+let localData = { version:'1.0', lastUpdated:'', fotometros:[], verificaciones:[], calibraciones:[] };
 
-Se ha verificado la eficacia del tratamiento mediante controles analíticos que confirman la eliminación del patógeno y la seguridad del agua para el uso por parte de los usuarios. El valor CT (concentración × tiempo) requerido de 3.600 ha sido alcanzado y mantenido durante el tiempo necesario.
+// ============================================================
+//  ESTADO DE SYNC
+// ============================================================
+function setSyncStatus(state, msg) {
+  const el = document.getElementById('syncStatus');
+  const icons = { ok:'🟢', loading:'🔄', error:'🔴', warn:'🟡', offline:'⚫' };
+  el.innerHTML = `${icons[state]||'⚪'} ${msg}`;
+  el.style.color = state==='ok'?'var(--accent2)':state==='error'?'var(--danger)':state==='warn'?'var(--warn)':'var(--text2)';
+}
 
-La documentación fotográfica adjunta proporciona evidencia visual del proceso realizado y del estado de la instalación en las diferentes fases del tratamiento.` :
-                    `El tratamiento de desinfección contra Pseudomonas aeruginosa se encuentra actualmente en fase de ejecución, habiendo completado ${currentStepCount} de las 6 etapas establecidas en el protocolo oficial.
+// ============================================================
+//  CARGAR DATOS DESDE GITHUB
+// ============================================================
+async function loadFromGitHub() {
+  setSyncStatus('loading', 'Cargando…');
+  try {
+    // Usamos la API (no raw) para obtener también el SHA
+    const headers = { 'Accept': 'application/vnd.github+json' };
+    if (GH.token) headers['Authorization'] = `Bearer ${GH.token}`;
 
-La instalación permanece cerrada al público hasta la finalización completa del protocolo de actuación. Los procedimientos ejecutados hasta la fecha se han realizado conforme a la normativa vigente, manteniendo un registro detallado de todas las actuaciones y controles realizados.
+    const res = await fetch(GH.apiUrl, { headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const meta = await res.json();
 
-Una vez completadas las etapas restantes del protocolo, se procederá a la normalización de la instalación y se emitirá el informe final de conformidad para autorizar la reapertura al público.`;
-                
-                yPosition = addTextWithPageBreak(conclusionsText, 20, yPosition) + 20;
-                
-                // ANEXO: DATOS TÉCNICOS TABULADOS
-                doc.addPage();
-                yPosition = 20;
-                
-                doc.setFontSize(16);
-                doc.setTextColor(0, 0, 0);
-                doc.text('ANEXO - DATOS TÉCNICOS', 20, yPosition);
-                yPosition += 15;
-                
-                // Tabla de datos de incidencia
-                doc.setFontSize(14);
-                doc.setFont(undefined, 'bold');
-                doc.text('A.1. DATOS DE LA INCIDENCIA', 20, yPosition);
-                yPosition += 10;
-                
-                doc.setFontSize(10);
-                doc.setFont(undefined, 'normal');
-                const incidentData = [
-                    ['Parámetro', 'Valor'],
-                    ['Piscina Afectada', treatmentData.incident.poolName || 'No especificada'],
-                    ['Fecha de Detección', treatmentData.incident.detectionDate ? new Date(treatmentData.incident.detectionDate).toLocaleString() : 'No especificada'],
-                    ['Responsable', treatmentData.incident.responsible || 'No especificado'],
-                    ['pH Inicial', String(treatmentData.incident.initialPh || 'No medido')],
-                    ['Cloro Libre Inicial (ppm)', String(treatmentData.incident.initialFreeChlorine || 'No medido')],
-                    ['Cloro Combinado Inicial (ppm)', String(treatmentData.incident.initialCombinedChlorine || 'No medido')],
-                    ['Temperatura (°C)', String(treatmentData.incident.temperature || 'No medida')]
-                ];
-                
-                incidentData.forEach((row, index) => {
-                    checkPageBreak(8);
-                    if (index === 0) {
-                        doc.setFont(undefined, 'bold');
-                        doc.rect(20, yPosition - 3, 170, 8);
-                    } else {
-                        doc.setFont(undefined, 'normal');
-                    }
-                    doc.text(row[0], 25, yPosition);
-                    doc.text(row[1], 100, yPosition);
-                    if (index === 0) doc.setFont(undefined, 'normal');
-                    yPosition += 8;
-                });
-                
-                yPosition += 10;
-                
-                // Tabla de pasos del protocolo
-                doc.setFontSize(14);
-                doc.setFont(undefined, 'bold');
-                doc.text('A.2. ESTADO DEL PROTOCOLO', 20, yPosition);
-                yPosition += 10;
-                
-                doc.setFontSize(10);
-                doc.setFont(undefined, 'normal');
-                const protocolHeaders = ['Paso', 'Descripción', 'Estado', 'Fecha'];
-                
-                // Encabezados
-                doc.setFont(undefined, 'bold');
-                doc.rect(20, yPosition - 3, 170, 8);
-                doc.text('Paso', 25, yPosition);
-                doc.text('Descripción', 45, yPosition);
-                doc.text('Estado', 120, yPosition);
-                doc.text('Fecha', 150, yPosition);
-                yPosition += 8;
-                
-                const stepNames = [
-                    'Limpieza General',
-                    'Contra-lavado',
-                    'Tratamiento Choque',
-                    'Hipercloración',
-                    'Segundo Contra-lavado',
-                    'Normalización'
-                ];
-                
-                for (let i = 1; i <= 6; i++) {
-                    checkPageBreak(8);
-                    const step = treatmentData.protocol.steps ? treatmentData.protocol.steps.find(s => s.number === i) : null;
-                    doc.setFont(undefined, 'normal');
-                    doc.text(i.toString(), 25, yPosition);
-                    doc.text(stepNames[i-1], 45, yPosition);
-                    doc.text(step && step.completed ? 'COMPLETADO' : 'PENDIENTE', 120, yPosition);
-                    doc.text(step && step.date ? new Date(step.date).toLocaleDateString() : '-', 150, yPosition);
-                    yPosition += 8;
-                }
-                
-                // Tabla de mediciones si existen
-                if (treatmentData.measurements.length > 0) {
-                    yPosition += 10;
-                    checkPageBreak(30);
-                    
-                    doc.setFontSize(14);
-                    doc.setFont(undefined, 'bold');
-                    doc.text('A.3. REGISTRO DE MEDICIONES', 20, yPosition);
-                    yPosition += 10;
-                    
-                    doc.setFontSize(9);
-                    // Encabezados de mediciones
-                    doc.setFont(undefined, 'bold');
-                    doc.rect(20, yPosition - 3, 170, 8);
-                    doc.text('Fecha/Hora', 25, yPosition);
-                    doc.text('pH', 80, yPosition);
-                    doc.text('Cl Libre', 95, yPosition);
-                    doc.text('Cl Comb.', 120, yPosition);
-                    doc.text('Temp.', 145, yPosition);
-                    doc.text('Obs.', 165, yPosition);
-                    yPosition += 8;
-                    
-                    treatmentData.measurements.forEach((measurement, index) => {
-                        checkPageBreak(8);
-                        doc.setFont(undefined, 'normal');
-                        doc.text(new Date(measurement.datetime).toLocaleDateString(), 25, yPosition);
-                        doc.text(String(measurement.ph || '-'), 80, yPosition);
-                        doc.text(String(measurement.freeChlorine || '-'), 95, yPosition);
-                        doc.text(String(measurement.combinedChlorine || '-'), 120, yPosition);
-                        doc.text(String(measurement.temperature || '-'), 145, yPosition);
-                        doc.text(measurement.observations ? 'Sí' : '-', 165, yPosition);
-                        yPosition += 8;
-                    });
-                }
-                
-                // Añadir fotografías si existen
-                let hasPhotos = false;
-                for (const stepId in treatmentData.protocol.photos) {
-                    if (treatmentData.protocol.photos[stepId].length > 0) {
-                        hasPhotos = true;
-                        break;
-                    }
-                }
-                
-                if (hasPhotos) {
-                    doc.addPage();
-                    yPosition = 20;
-                    
-                    doc.setFontSize(16);
-                    doc.setTextColor(0, 0, 0);
-                    doc.text('ANEXO B - DOCUMENTACIÓN FOTOGRÁFICA', 20, yPosition);
-                    yPosition += 20;
-                    
-                    const photoStepNames = [
-                        'Limpieza General',
-                        'Contra-lavado',
-                        'Tratamiento Choque',
-                        'Hipercloración',
-                        'Segundo Contra-lavado',
-                        'Normalización'
-                    ];
-                    
-                    for (const stepId in treatmentData.protocol.photos) {
-                        const photos = treatmentData.protocol.photos[stepId];
-                        if (photos.length > 0) {
-                            checkPageBreak(30);
-                            
-                            doc.setFontSize(12);
-                            doc.setFont(undefined, 'bold');
-                            const stepNumber = parseInt(stepId.replace('step', ''));
-                            doc.text(`B.${stepNumber}. ${photoStepNames[stepNumber - 1]}:`, 25, yPosition);
-                            yPosition += 15;
-                            
-                            for (let i = 0; i < photos.length; i++) {
-                                checkPageBreak(80);
-                                
-                                try {
-                                    const imgWidth = 80;
-                                    const imgHeight = 60;
-                                    
-                                    doc.addImage(photos[i], 'JPEG', 25, yPosition, imgWidth, imgHeight);
-                                    yPosition += imgHeight + 10;
-                                } catch (error) {
-                                    console.warn('Error al añadir imagen:', error);
-                                    doc.setFontSize(10);
-                                    doc.text('(Imagen no disponible)', 25, yPosition);
-                                    yPosition += 10;
-                                }
-                            }
-                            yPosition += 10;
-                        }
-                    }
-                }
-                
-                // Pie de página
-                const totalPages = doc.internal.getNumberOfPages();
-                for (let i = 1; i <= totalPages; i++) {
-                    doc.setPage(i);
-                    doc.setFontSize(8);
-                    doc.setTextColor(100, 100, 100);
-                    doc.text(`Página ${i} de ${totalPages}`, 20, pageHeight - 10);
-                    doc.text('Informe generado por Sistema Gestor Pseudomonas', 120, pageHeight - 10);
-                }
-                
-                // Guardar el PDF
-                const fileName = `Tratamiento_Pseudomonas_${treatmentData.incident.poolName || 'Piscina'}_${new Date().toISOString().split('T')[0]}.pdf`;
-                doc.save(fileName);
-                
-                hideLoading();
-                alert('✅ Informe PDF generado correctamente.');
-                
-            } catch (error) {
-                hideLoading();
-                console.error('Error al generar PDF:', error);
-                console.error('Error stack:', error.stack);
-                console.error('Error message:', error.message);
-                console.error('TreatmentData:', JSON.stringify(treatmentData, null, 2));
-                alert(`❌ Error al generar el PDF: ${error.message || 'Error desconocido'}. Por favor, inténtalo de nuevo.`);
-            }
-        }
+    ghFileSha = meta.sha;
+    const content = JSON.parse(atob(meta.content.replace(/\n/g,'')));
+    localData = { version:'1.0', lastUpdated:'', fotometros:[], verificaciones:[], calibraciones:[], ...content };
+    setSyncStatus('ok', 'GitHub ✓');
+  } catch(e) {
+    // Fallback a localStorage si hay datos
+    const ls = localStorage.getItem('fc_localData');
+    if (ls) {
+      localData = JSON.parse(ls);
+      setSyncStatus('warn', 'Sin sync (local)');
+    } else {
+      setSyncStatus(GH.token ? 'error' : 'warn', GH.token ? 'Error GitHub' : 'Sin token →');
+    }
+  }
+}
 
-        // Exportar a Word
-        async function exportToWord() {
-            showLoading();
-            
-            try {
-                const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
-                
-                const doc = new Document({
-                    sections: [{
-                        properties: {},
-                        children: [
-                            // Título
-                            new Paragraph({
-                                children: [
-                                    new TextRun({
-                                        text: "INFORME DE TRATAMIENTO PSEUDOMONAS",
-                                        bold: true,
-                                        size: 28,
-                                        color: "2C3E50"
-                                    })
-                                ],
-                                heading: HeadingLevel.TITLE,
-                                alignment: AlignmentType.CENTER
-                            }),
-                            
-                            new Paragraph({
-                                children: [
-                                    new TextRun({
-                                        text: `Generado el: ${new Date().toLocaleString()}`,
-                                        italics: true,
-                                        size: 20
-                                    })
-                                ],
-                                alignment: AlignmentType.CENTER
-                            }),
-                            
-                            new Paragraph({ text: "" }), // Espacio
-                            
-                            // Sección 1: Datos de la incidencia
-                            new Paragraph({
-                                children: [
-                                    new TextRun({
-                                        text: "1. DATOS DE LA INCIDENCIA",
-                                        bold: true,
-                                        size: 24
-                                    })
-                                ],
-                                heading: HeadingLevel.HEADING_1
-                            }),
-                            
-                            new Paragraph({
-                                children: [
-                                    new TextRun({ text: "Piscina Afectada: ", bold: true }),
-                                    new TextRun({ text: treatmentData.incident.poolName || 'No especificada' })
-                                ]
-                            }),
-                            
-                            new Paragraph({
-                                children: [
-                                    new TextRun({ text: "Fecha de Detección: ", bold: true }),
-                                    new TextRun({ text: treatmentData.incident.detectionDate ? new Date(treatmentData.incident.detectionDate).toLocaleString() : 'No especificada' })
-                                ]
-                            }),
-                            
-                            new Paragraph({
-                                children: [
-                                    new TextRun({ text: "Responsable: ", bold: true }),
-                                    new TextRun({ text: treatmentData.incident.responsible || 'No especificado' })
-                                ]
-                            }),
-                            
-                            new Paragraph({
-                                children: [
-                                    new TextRun({ text: "pH Inicial: ", bold: true }),
-                                    new TextRun({ text: treatmentData.incident.initialPh || 'No medido' })
-                                ]
-                            }),
-                            
-                            new Paragraph({
-                                children: [
-                                    new TextRun({ text: "Cloro Libre Inicial (ppm): ", bold: true }),
-                                    new TextRun({ text: treatmentData.incident.initialFreeChlorine || 'No medido' })
-                                ]
-                            }),
-                            
-                            new Paragraph({ text: "" }), // Espacio
-                            
-                            // Sección 2: Protocolo
-                            new Paragraph({
-                                children: [
-                                    new TextRun({
-                                        text: "2. PROTOCOLO DE ACTUACIÓN",
-                                        bold: true,
-                                        size: 24
-                                    })
-                                ],
-                                heading: HeadingLevel.HEADING_1
-                            })
-                        ]
-                    }]
-                });
-                
-                // Añadir pasos del protocolo
-                const stepNames = [
-                    'Limpieza General Completa',
-                    'Contra-lavado de Filtros',
-                    'Tratamiento de Choque',
-                    'Hipercloración del Sistema',
-                    'Segundo Contra-lavado',
-                    'Normalización'
-                ];
-                
-                (treatmentData.protocol.steps || []).forEach(step => {
-                    doc.addSection({
-                        children: [
-                            new Paragraph({
-                                children: [
-                                    new TextRun({
-                                        text: `Paso ${step.number}: ${stepNames[step.number - 1]}`,
-                                        bold: true,
-                                        size: 22
-                                    })
-                                ]
-                            }),
-                            
-                            new Paragraph({
-                                children: [
-                                    new TextRun({ text: "Estado: ", bold: true }),
-                                    new TextRun({ 
-                                        text: step.completed ? '✓ Completado' : '⏳ Pendiente',
-                                        color: step.completed ? "27AE60" : "F39C12"
-                                    })
-                                ]
-                            }),
-                            
-                            ...(step.date ? [new Paragraph({
-                                children: [
-                                    new TextRun({ text: "Fecha: ", bold: true }),
-                                    new TextRun({ text: new Date(step.date).toLocaleString() })
-                                ]
-                            })] : []),
-                            
-                            ...(step.notes ? [new Paragraph({
-                                children: [
-                                    new TextRun({ text: "Observaciones: ", bold: true }),
-                                    new TextRun({ text: step.notes })
-                                ]
-                            })] : [])
-                        ]
-                    });
-                });
-                
-                // Generar y descargar el documento
-                const buffer = await Packer.toBuffer(doc);
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-                
-                const fileName = `Tratamiento_Pseudomonas_${treatmentData.incident.poolName || 'Piscina'}_${new Date().toISOString().split('T')[0]}.docx`;
-                saveAs(blob, fileName);
-                
-                hideLoading();
-                alert('✅ Documento Word generado correctamente.');
-                
-            } catch (error) {
-                hideLoading();
-                console.error('Error al generar Word:', error);
-                alert('❌ Error al generar el documento Word. Por favor, inténtalo de nuevo.');
-            }
-        }
+// ============================================================
+//  GUARDAR DATOS EN GITHUB
+// ============================================================
+async function saveToGitHub() {
+  // Siempre guardar localmente también
+  localStorage.setItem('fc_localData', JSON.stringify(localData));
 
-        // Exportar datos JSON
-        function exportData() {
-            const dataToExport = {
-                ...treatmentData,
-                exportDate: new Date().toISOString(),
-                version: '1.0'
-            };
-            
-            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-            const fileName = `Datos_Tratamiento_Pseudomonas_${new Date().toISOString().split('T')[0]}.json`;
-            
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            alert('✅ Datos exportados correctamente en formato JSON.');
-        }
+  if (!GH.token) { setSyncStatus('warn', 'Sin token →'); return; }
 
-        // Mostrar/ocultar indicador de carga
-        function showLoading() {
-            document.getElementById('exportLoading').classList.add('active');
-        }
+  setSyncStatus('loading', 'Guardando…');
+  localData.lastUpdated = new Date().toISOString();
 
-        function hideLoading() {
-            document.getElementById('exportLoading').classList.remove('active');
-        }
+  const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(localData, null, 2))));
 
-        // Guardar datos en localStorage
-        function saveData() {
-            localStorage.setItem('pseudomonasTreatment', JSON.stringify(treatmentData));
-        }
+  try {
+    const body = {
+      message: `FotoCalib update ${new Date().toLocaleString('es-ES')}`,
+      content: contentB64,
+      branch: GH.branch
+    };
+    if (ghFileSha) body.sha = ghFileSha;
 
-        // Cargar datos guardados
-        function loadStoredData() {
-            const stored = localStorage.getItem('pseudomonasTreatment');
-            if (stored) {
-                treatmentData = JSON.parse(stored);
-                
-                // Restaurar formulario de incidencia
-                if (treatmentData.incident) {
-                    Object.keys(treatmentData.incident).forEach(key => {
-                        const element = document.getElementById(key);
-                        if (element) {
-                            element.value = treatmentData.incident[key];
-                        }
-                    });
-                }
-                
-                // Restaurar pasos completados
-                if (treatmentData.protocol.steps) {
-                    treatmentData.protocol.steps.forEach(step => {
-                        if (step.completed) {
-                            const stepElement = document.getElementById(`step${step.number}`);
-                            if (stepElement) {
-                                stepElement.classList.add('completed');
-                            }
-                            
-                            // Restaurar datos del paso
-                            const dateInput = document.getElementById(`step${step.number}Date`);
-                            const notesInput = document.getElementById(`step${step.number}Notes`);
-                            
-                            if (dateInput && step.date) dateInput.value = step.date;
-                            if (notesInput && step.notes) notesInput.value = step.notes;
-                            
-                            // Restaurar datos específicos
-                            if (step.number === 3) {
-                                if (step.chlorine) document.getElementById('step3Chlorine').value = step.chlorine;
-                                if (step.ph) document.getElementById('step3Ph').value = step.ph;
-                                if (step.startDate) document.getElementById('step3DateStart').value = step.startDate;
-                                if (step.endDate) document.getElementById('step3DateEnd').value = step.endDate;
-                            }
-                            
-                            if (step.number === 4 && step.systems) {
-                                document.getElementById('step4Systems').value = step.systems;
-                            }
-                            
-                            if (step.number === 6) {
-                                if (step.finalChlorine) document.getElementById('step6Chlorine').value = step.finalChlorine;
-                                if (step.finalPh) document.getElementById('step6Ph').value = step.finalPh;
-                                if (step.reopeningDate) document.getElementById('step6Reopening').value = step.reopeningDate;
-                            }
-                        }
-                    });
-                    
-                    completedSteps = treatmentData.protocol.steps.filter(s => s.completed).length;
-                }
-                
-                updateMeasurementTable();
-                updateProgress();
-                updateTimeline();
-                generateTreatmentSummary();
-            }
-        }
+    const res = await fetch(GH.apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${GH.token}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
 
-        // Función para limpiar todos los datos (para testing)
-        function clearAllData() {
-            if (confirm('⚠️ ¿Estás seguro de que quieres borrar todos los datos? Esta acción no se puede deshacer.')) {
-                localStorage.removeItem('pseudomonasTreatment');
-                location.reload();
-            }
-        }
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
 
-        // Función para guardar fotos de paso específico
-        function saveStepPhotos(stepId) {
-            const grid = document.getElementById(`${stepId}PhotoGrid`);
-            const photos = [];
-            
-            grid.querySelectorAll('img').forEach(img => {
-                photos.push(img.src);
-            });
-            
-            treatmentData.protocol.photos[stepId] = photos;
-            saveData();
-        }
+    const result = await res.json();
+    ghFileSha = result.content.sha;
+    setSyncStatus('ok', 'Guardado ✓');
+  } catch(e) {
+    setSyncStatus('error', 'Error al guardar');
+    console.error('GitHub save error:', e);
+  }
+}
 
-        // Actualizar resumen periódicamente
-        setInterval(() => {
-            generateTreatmentSummary();
-        }, 30000); // Cada 30 segundos
-    </script>
+// ============================================================
+//  ACCESSORS — ahora usan localData en vez de localStorage
+// ============================================================
+const DB = { id: () => Date.now() + Math.random().toString(36).slice(2,6) };
+
+const getFotos   = () => localData.fotometros    || [];
+const getVerifs  = () => localData.verificaciones || [];
+const getCals    = () => localData.calibraciones  || [];
+
+function setFotos(v)  { localData.fotometros    = v; }
+function setVerifs(v) { localData.verificaciones = v; }
+function setCals(v)   { localData.calibraciones  = v; }
+
+// ============================================================
+//  UTILIDADES
+// ============================================================
+const today = () => new Date().toISOString().slice(0,10);
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const diff = new Date(dateStr) - new Date(today());
+  return Math.ceil(diff / (1000*60*60*24));
+}
+
+function nextCalDate(lastCalStr) {
+  if (!lastCalStr) return null;
+  const d = new Date(lastCalStr);
+  d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().slice(0,10);
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function getDeviceStatus(foto) {
+  const fotos = getFotos();
+  const verifs = getVerifs().filter(v => v.fotoId === foto.id);
+  const cals = getCals().filter(c => c.fotoId === foto.id);
+
+  // Calibración anual
+  const allCalDates = [];
+  if (foto.calFecha) allCalDates.push(foto.calFecha);
+  cals.forEach(c => allCalDates.push(c.fecha));
+  const lastCal = allCalDates.sort().at(-1);
+  const nextCal = nextCalDate(lastCal);
+  const calDays = daysUntil(nextCal);
+
+  // Verificación mensual — última
+  const lastVerif = verifs.sort((a,b) => a.fecha<b.fecha?1:-1)[0];
+  const lastVerifDate = lastVerif?.fecha;
+  const verifDays = lastVerifDate ? daysUntil(new Date(lastVerifDate).setMonth(new Date(lastVerifDate).getMonth()+1)) : null;
+
+  let calStatus = 'ok', verifStatus = 'ok';
+
+  if (!lastCal) calStatus = 'danger';
+  else if (calDays !== null && calDays < 0) calStatus = 'danger';
+  else if (calDays !== null && calDays < 30) calStatus = 'warn';
+
+  if (!lastVerifDate) verifStatus = 'danger';
+  else {
+    const verifDaysNum = typeof verifDays === 'object' ? Math.ceil((verifDays - new Date()) / 86400000) : verifDays;
+    if (verifDaysNum !== null && verifDaysNum < 0) verifStatus = 'danger';
+    else if (verifDaysNum !== null && verifDaysNum < 7) verifStatus = 'warn';
+  }
+
+  const overall = (calStatus === 'danger' || verifStatus === 'danger') ? 'danger'
+                : (calStatus === 'warn' || verifStatus === 'warn') ? 'warn' : 'ok';
+
+  const lastVerifFail = lastVerif && lastVerif.params && lastVerif.params.some(p => p.status === 'fail');
+
+  return { overall, calStatus, verifStatus, lastCal, nextCal, calDays, lastVerifDate, lastVerifFail };
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', async () => {
+  const d = new Date();
+  document.getElementById('headerDate').innerHTML =
+    d.toLocaleDateString('es-ES', {weekday:'short',day:'2-digit',month:'short'}).replace('.','')+'<br>'+
+    d.getFullYear();
+
+  setSyncStatus('loading', 'Conectando…');
+
+  if (!GH.token) {
+    // No hay token: mostrar modal de configuración automáticamente
+    setSyncStatus('warn', 'Configura token →');
+    setTimeout(() => openSettings(), 600);
+  }
+
+  await loadFromGitHub();
+  renderAll();
+});
+
+// ============================================================
+//  RENDER PRINCIPAL
+// ============================================================
+function renderAll() {
+  renderDashboard();
+  renderDevices();
+  renderVerifications();
+  renderTrazSelector();
+}
+
+// ============================================================
+//  DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const fotos = getFotos().filter(f => f.estado === 'activo');
+  const verifs = getVerifs();
+  const cals = getCals();
+
+  let alerts = 0, warns = 0, oks = 0;
+  const alertHtml = [];
+
+  fotos.forEach(f => {
+    const s = getDeviceStatus(f);
+    if (s.overall === 'danger') {
+      alerts++;
+      alertHtml.push(`<div class="alert-banner"><span>🚨</span><div><strong>${f.nombre}</strong> — ${s.calStatus==='danger'?'Calibración anual vencida/pendiente':''} ${s.verifStatus==='danger'?'Verificación mensual vencida/pendiente':''}</div></div>`);
+    } else if (s.overall === 'warn') warns++;
+    else oks++;
+  });
+
+  document.getElementById('dashAlerts').innerHTML = alertHtml.join('');
+
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-num accent">${fotos.length}</div>
+      <div class="stat-desc">Fotómetros activos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num ${alerts>0?'danger':oks===fotos.length?'ok':'warn'}">${alerts>0?alerts:oks}</div>
+      <div class="stat-desc">${alerts>0?'Con alertas':'Sin alertas'}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num accent">${verifs.length}</div>
+      <div class="stat-desc">Verificaciones registradas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num accent">${verifs.filter(v=>v.global==='fail').length}</div>
+      <div class="stat-desc">Fallos detectados</div>
+    </div>
+  `;
+
+  // Últimos 5 dispositivos
+  const html = fotos.length === 0
+    ? '<div class="empty"><div class="empty-icon">📟</div><h3>Sin fotómetros</h3><p>Añade tu primer fotómetro con el botón +</p></div>'
+    : fotos.map(f => renderDeviceCard(f, true)).join('');
+  document.getElementById('dashDevices').innerHTML = html;
+}
+
+// ============================================================
+//  DISPOSITIVOS
+// ============================================================
+let deviceFilter = 'all';
+function filterDevices(el) {
+  document.querySelectorAll('.filter-row .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  deviceFilter = el.dataset.filter;
+  renderDevices();
+}
+
+function renderDevices() {
+  const fotos = getFotos();
+  const filtered = fotos.filter(f => {
+    if (deviceFilter === 'all') return true;
+    const s = getDeviceStatus(f);
+    return s.overall === deviceFilter;
+  });
+  const html = filtered.length === 0
+    ? '<div class="empty"><div class="empty-icon">🔭</div><h3>Sin resultados</h3><p>No hay fotómetros en este estado</p></div>'
+    : filtered.map(f => renderDeviceCard(f, false)).join('');
+  document.getElementById('devicesList').innerHTML = html;
+}
+
+function renderDeviceCard(foto, compact) {
+  const s = getDeviceStatus(foto);
+  const statusLabels = {ok:'CORRECTO', warn:'ATENCIÓN', danger:'VENCIDO'};
+  const verifs = getVerifs().filter(v => v.fotoId === foto.id);
+  const lastV = verifs.sort((a,b)=>a.fecha<b.fecha?1:-1)[0];
+
+  return `<div class="card ${s.overall}" onclick="showDetalle('${foto.id}')">
+    <div class="card-header">
+      <div>
+        <div class="card-title">${foto.nombre}</div>
+        <div style="margin-top:4px;font-size:12px;color:var(--text2)">${foto.param} · ${foto.ubicacion}</div>
+      </div>
+      <div class="card-serial">${foto.serie}</div>
+    </div>
+    <div class="card-meta">
+      <div class="meta-item">
+        <div class="meta-label">Cal. anual</div>
+        <div class="meta-value ${s.calStatus}">${fmtDate(s.lastCal)}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Próx. cal.</div>
+        <div class="meta-value ${s.calStatus}">${fmtDate(s.nextCal)}${s.calDays!==null?` (${s.calDays}d)`:''}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Últ. verif.</div>
+        <div class="meta-value ${s.verifStatus}">${fmtDate(s.lastVerifDate)}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Estado</div>
+        <span class="badge ${s.overall}">${statusLabels[s.overall]}</span>
+      </div>
+    </div>
+    ${s.lastVerifFail ? `<div style="margin-top:8px;font-size:12px;color:var(--danger)">⚠ Última verificación con fallos</div>` : ''}
+  </div>`;
+}
+
+// ============================================================
+//  VERIFICACIONES
+// ============================================================
+let verifFilter = 'all';
+function filterVerif(el) {
+  document.querySelectorAll('#page-verificaciones .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  verifFilter = el.dataset.filter;
+  renderVerifications();
+}
+
+function renderVerifications() {
+  const verifs = getVerifs().sort((a,b) => a.fecha<b.fecha?1:-1);
+  const fotos = getFotos();
+  const filtered = verifs.filter(v => verifFilter === 'all' ? true : v.global === verifFilter);
+
+  if (filtered.length === 0) {
+    document.getElementById('verifList').innerHTML = '<div class="empty"><div class="empty-icon">🧪</div><h3>Sin verificaciones</h3><p>Registra la primera verificación mensual</p></div>';
+    return;
+  }
+
+  const html = filtered.map(v => {
+    const foto = fotos.find(f => f.id === v.fotoId);
+    const passFail = v.global === 'pass';
+    return `<div class="card ${passFail?'ok':'danger'}">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${foto?.nombre ?? 'Fotómetro eliminado'}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px">Patrón: ${v.patron || '—'} · Técnico: ${v.tecnico || '—'}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="badge ${passFail?'ok':'danger'}">${passFail?'PASA':'FALLA'}</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fmtDate(v.fecha)}</span>
+        </div>
+      </div>
+      ${v.params && v.params.length ? `<div style="display:flex;flex-direction:column;gap:4px;">
+        ${v.params.map(p=>`<div style="display:flex;justify-content:space-between;font-size:12px;background:var(--bg);padding:6px 10px;border-radius:6px;">
+          <span>${p.nombre}</span>
+          <span style="color:var(--text2);font-family:var(--mono)">${p.valor}</span>
+          <span style="color:${p.status==='pass'?'var(--accent2)':'var(--danger)'}">${p.status==='pass'?'✓':'✗'}</span>
+        </div>`).join('')}
+      </div>` : ''}
+      ${v.notas ? `<div style="margin-top:8px;font-size:12px;color:var(--text2);padding:6px 10px;background:var(--bg);border-radius:6px;">${v.notas}</div>` : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('verifList').innerHTML = html;
+}
+
+// ============================================================
+//  TRAZABILIDAD
+// ============================================================
+function renderTrazSelector() {
+  const fotos = getFotos();
+  const sel = document.getElementById('trazSelect');
+  sel.innerHTML = '<option value="">— Selecciona fotómetro —</option>' +
+    fotos.map(f => `<option value="${f.id}">${f.nombre} (${f.serie})</option>`).join('');
+}
+
+function renderTrazabilidad() {
+  const fotoId = document.getElementById('trazSelect').value;
+  if (!fotoId) { document.getElementById('trazContent').innerHTML = ''; return; }
+
+  const verifs = getVerifs().filter(v => v.fotoId === fotoId).sort((a,b) => a.fecha<b.fecha?1:-1);
+  const cals = getCals().filter(c => c.fotoId === fotoId).sort((a,b) => a.fecha<b.fecha?1:-1);
+  const foto = getFotos().find(f => f.id === fotoId);
+
+  const events = [];
+
+  // Cal inicial del fotómetro
+  if (foto?.calFecha) {
+    events.push({ tipo: 'calibracion', fecha: foto.calFecha, titulo: 'Calibración anual (inicial)', lab: foto.calLab, cert: foto.calCert, notas: foto.notas });
+  }
+
+  cals.forEach(c => events.push({ tipo: 'calibracion', fecha: c.fecha, titulo: 'Calibración anual', lab: c.lab, cert: c.cert, notas: c.notas, resultado: c.resultado, vigencia: c.vigencia }));
+  verifs.forEach(v => events.push({ tipo: v.global === 'fail' ? 'verificacion_fail' : 'verificacion_ok', fecha: v.fecha, titulo: `Verificación mensual — ${v.global==='pass'?'PASA':'FALLA'}`, patron: v.patron, tecnico: v.tecnico, params: v.params, notas: v.notas }));
+
+  events.sort((a,b) => a.fecha < b.fecha ? 1 : -1);
+
+  if (events.length === 0) {
+    document.getElementById('trazContent').innerHTML = '<div class="empty"><div class="empty-icon">📈</div><h3>Sin registros</h3><p>No hay historial para este fotómetro</p></div>';
+    return;
+  }
+
+  const icons = { calibracion: '🔧', verificacion_ok: '✅', verificacion_fail: '❌' };
+
+  const html = '<div class="timeline">' + events.map(e => `
+    <div class="timeline-item">
+      <div class="timeline-dot ${e.tipo}">${icons[e.tipo]}</div>
+      <div class="timeline-body">
+        <div class="timeline-title">${e.titulo}</div>
+        <div class="timeline-date">${fmtDate(e.fecha)}</div>
+        ${e.lab ? `<div class="timeline-note">🏢 ${e.lab}${e.cert?` · Cert: ${e.cert}`:''}</div>` : ''}
+        ${e.resultado ? `<div class="timeline-note">📊 ${e.resultado}</div>` : ''}
+        ${e.vigencia ? `<div class="timeline-note">📅 Válida hasta: ${fmtDate(e.vigencia)}</div>` : ''}
+        ${e.patron ? `<div class="timeline-note">🧪 Patrón: ${e.patron} · Técnico: ${e.tecnico}</div>` : ''}
+        ${e.params && e.params.length ? `<div style="margin-top:4px;display:flex;flex-direction:column;gap:3px;">${e.params.map(p=>`<div style="font-size:12px;color:var(--text2)">• ${p.nombre}: <span style="font-family:var(--mono)">${p.valor}</span> <span style="color:${p.status==='pass'?'var(--accent2)':'var(--danger)'}">${p.status==='pass'?'✓':'✗'}</span></div>`).join('')}</div>` : ''}
+        ${e.notas ? `<div class="timeline-note" style="font-style:italic">${e.notas}</div>` : ''}
+      </div>
+    </div>
+  `).join('') + '</div>';
+
+  document.getElementById('trazContent').innerHTML = html;
+}
+
+// ============================================================
+//  MODALS
+// ============================================================
+function openFab() { openModal('modalFab'); }
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+// Cerrar al clic en overlay
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+function openFotometro(id = null) {
+  document.getElementById('mFotoId').value = id || '';
+  if (id) {
+    const f = getFotos().find(x => x.id === id);
+    document.getElementById('mFotoTitle').textContent = 'Editar Fotómetro';
+    document.getElementById('mFotoNombre').value = f.nombre;
+    document.getElementById('mFotoSerie').value = f.serie;
+    document.getElementById('mFotoParam').value = f.param;
+    document.getElementById('mFotoUbic').value = f.ubicacion;
+    document.getElementById('mFotoEstado').value = f.estado;
+    document.getElementById('mFotoCalFecha').value = f.calFecha || '';
+    document.getElementById('mFotoLab').value = f.calLab || '';
+    document.getElementById('mFotoCert').value = f.calCert || '';
+    document.getElementById('mFotoNotas').value = f.notas || '';
+  } else {
+    document.getElementById('mFotoTitle').textContent = 'Nuevo Fotómetro';
+    document.getElementById('mFotoNombre').value = '';
+    document.getElementById('mFotoSerie').value = '';
+    document.getElementById('mFotoUbic').value = '';
+    document.getElementById('mFotoCalFecha').value = today();
+    document.getElementById('mFotoLab').value = '';
+    document.getElementById('mFotoCert').value = '';
+    document.getElementById('mFotoNotas').value = '';
+  }
+  openModal('modalFotometro');
+}
+
+function saveFotometro() {
+  const id = document.getElementById('mFotoId').value;
+  const nombre = document.getElementById('mFotoNombre').value.trim();
+  if (!nombre) { alert('El nombre es obligatorio'); return; }
+  const obj = {
+    id: id || DB.id(),
+    nombre,
+    serie: document.getElementById('mFotoSerie').value.trim(),
+    param: document.getElementById('mFotoParam').value,
+    ubicacion: document.getElementById('mFotoUbic').value.trim(),
+    estado: document.getElementById('mFotoEstado').value,
+    calFecha: document.getElementById('mFotoCalFecha').value,
+    calLab: document.getElementById('mFotoLab').value.trim(),
+    calCert: document.getElementById('mFotoCert').value.trim(),
+    notas: document.getElementById('mFotoNotas').value.trim(),
+  };
+  const fotos = getFotos();
+  if (id) {
+    const idx = fotos.findIndex(f => f.id === id);
+    fotos[idx] = obj;
+  } else {
+    fotos.push(obj);
+  }
+  setFotos(fotos);
+  closeModal('modalFotometro');
+  saveToGitHub();
+  renderAll();
+}
+
+function openVerif(fotoId = null) {
+  const fotos = getFotos().filter(f => f.estado === 'activo');
+  const sel = document.getElementById('mVerifFoto');
+  sel.innerHTML = fotos.map(f => `<option value="${f.id}" ${f.id===fotoId?'selected':''}>${f.nombre}</option>`).join('');
+  document.getElementById('mVerifFecha').value = today();
+  document.getElementById('mVerifPatron').value = '';
+  document.getElementById('mVerifTecnico').value = '';
+  document.getElementById('mVerifNotas').value = '';
+  // Reset params
+  document.getElementById('verifParams').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Parámetro 1</label>
+      <div class="result-row">
+        <div><label class="form-label">Nombre</label><input type="text" class="form-input param-name" placeholder="Ej: Cloro libre"></div>
+        <div><label class="form-label">Valor patrón → obtenido</label><input type="text" class="form-input param-val" placeholder="1.00 → 1.02 mg/L"></div>
+        <div><label class="form-label">OK</label><div class="result-status" onclick="toggleStatus(this)">—</div></div>
+      </div>
+    </div>`;
+  openModal('modalVerif');
+}
+
+function addParamRow() {
+  const container = document.getElementById('verifParams');
+  const n = container.querySelectorAll('.form-group').length + 1;
+  const div = document.createElement('div');
+  div.className = 'form-group';
+  div.innerHTML = `<label class="form-label">Parámetro ${n}</label>
+    <div class="result-row">
+      <div><label class="form-label">Nombre</label><input type="text" class="form-input param-name" placeholder="Parámetro"></div>
+      <div><label class="form-label">Valor patrón → obtenido</label><input type="text" class="form-input param-val" placeholder="x.xx → x.xx mg/L"></div>
+      <div><label class="form-label">OK</label><div class="result-status" onclick="toggleStatus(this)">—</div></div>
+    </div>`;
+  container.appendChild(div);
+}
+
+function toggleStatus(el) {
+  if (!el.classList.contains('pass') && !el.classList.contains('fail')) {
+    el.classList.add('pass'); el.textContent = '✓';
+  } else if (el.classList.contains('pass')) {
+    el.classList.remove('pass'); el.classList.add('fail'); el.textContent = '✗';
+  } else {
+    el.classList.remove('fail'); el.textContent = '—';
+  }
+}
+
+function saveVerificacion() {
+  const fotoId = document.getElementById('mVerifFoto').value;
+  const fecha = document.getElementById('mVerifFecha').value;
+  if (!fotoId || !fecha) { alert('Selecciona fotómetro y fecha'); return; }
+
+  const names = [...document.querySelectorAll('.param-name')].map(i => i.value.trim());
+  const vals = [...document.querySelectorAll('.param-val')].map(i => i.value.trim());
+  const statuses = [...document.querySelectorAll('.result-status')].map(el =>
+    el.classList.contains('pass') ? 'pass' : el.classList.contains('fail') ? 'fail' : 'pass'
+  );
+  const params = names.map((n,i) => ({ nombre: n||`Parámetro ${i+1}`, valor: vals[i], status: statuses[i] }));
+  const global = params.some(p => p.status === 'fail') ? 'fail' : 'pass';
+
+  const obj = {
+    id: DB.id(), fotoId, fecha,
+    patron: document.getElementById('mVerifPatron').value.trim(),
+    tecnico: document.getElementById('mVerifTecnico').value.trim(),
+    params, global,
+    notas: document.getElementById('mVerifNotas').value.trim(),
+  };
+
+  const all = getVerifs();
+  all.push(obj);
+  setVerifs(all);
+  closeModal('modalVerif');
+  saveToGitHub();
+  renderAll();
+}
+
+function openCalAnual() {
+  const fotos = getFotos().filter(f => f.estado === 'activo');
+  document.getElementById('mCalFoto').innerHTML = fotos.map(f => `<option value="${f.id}">${f.nombre}</option>`).join('');
+  document.getElementById('mCalFecha').value = today();
+  document.getElementById('mCalLab').value = '';
+  document.getElementById('mCalCert').value = '';
+  document.getElementById('mCalResultado').value = '';
+  document.getElementById('mCalNotas').value = '';
+  // Auto vigencia = 1 año
+  const vig = new Date(); vig.setFullYear(vig.getFullYear()+1);
+  document.getElementById('mCalVigencia').value = vig.toISOString().slice(0,10);
+  openModal('modalCalAnual');
+}
+
+function saveCalAnual() {
+  const fotoId = document.getElementById('mCalFoto').value;
+  const fecha = document.getElementById('mCalFecha').value;
+  if (!fotoId || !fecha) { alert('Selecciona fotómetro y fecha'); return; }
+  const obj = {
+    id: DB.id(), fotoId, fecha,
+    lab: document.getElementById('mCalLab').value.trim(),
+    cert: document.getElementById('mCalCert').value.trim(),
+    resultado: document.getElementById('mCalResultado').value.trim(),
+    vigencia: document.getElementById('mCalVigencia').value,
+    notas: document.getElementById('mCalNotas').value.trim(),
+  };
+  // Actualizar también la fecha en el fotómetro
+  const fotos = getFotos();
+  const idx = fotos.findIndex(f => f.id === fotoId);
+  if (idx >= 0 && (!fotos[idx].calFecha || obj.fecha > fotos[idx].calFecha)) {
+    fotos[idx].calFecha = obj.fecha;
+    fotos[idx].calLab = obj.lab;
+    fotos[idx].calCert = obj.cert;
+    setFotos(fotos);
+  }
+  const all = getCals();
+  all.push(obj);
+  setCals(all);
+  closeModal('modalCalAnual');
+  saveToGitHub();
+  renderAll();
+}
+
+// ============================================================
+//  DETALLE FOTÓMETRO
+// ============================================================
+let detalleFotoId = null;
+function showDetalle(id) {
+  detalleFotoId = id;
+  const foto = getFotos().find(f => f.id === id);
+  const s = getDeviceStatus(foto);
+  const verifs = getVerifs().filter(v => v.fotoId === id).sort((a,b)=>a.fecha<b.fecha?1:-1);
+  const lastV = verifs[0];
+
+  document.getElementById('detalleContent').innerHTML = `
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
+        <div style="font-size:17px;font-weight:700;">${foto.nombre}</div>
+        <span class="card-serial">${foto.serie}</span>
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${foto.param} · ${foto.ubicacion}</div>
+      <span class="badge ${s.overall}">${{ok:'CORRECTO',warn:'ATENCIÓN',danger:'VENCIDO'}[s.overall]}</span>
+    </div>
+    <div class="form-divider"></div>
+    <div class="section-label" style="margin-top:12px;">Calibración anual</div>
+    <div class="card-meta" style="margin-bottom:12px;">
+      <div class="meta-item"><div class="meta-label">Última</div><div class="meta-value ${s.calStatus}">${fmtDate(s.lastCal)}</div></div>
+      <div class="meta-item"><div class="meta-label">Próxima</div><div class="meta-value ${s.calStatus}">${fmtDate(s.nextCal)}</div></div>
+      <div class="meta-item"><div class="meta-label">Laboratorio</div><div class="meta-value" style="font-size:12px">${foto.calLab||'—'}</div></div>
+      <div class="meta-item"><div class="meta-label">Certificado</div><div class="meta-value" style="font-size:12px;color:var(--accent)">${foto.calCert||'—'}</div></div>
+    </div>
+    <div class="section-label">Última verificación mensual</div>
+    ${lastV ? `<div class="card-meta">
+      <div class="meta-item"><div class="meta-label">Fecha</div><div class="meta-value ${s.verifStatus}">${fmtDate(lastV.fecha)}</div></div>
+      <div class="meta-item"><div class="meta-label">Resultado</div><span class="badge ${lastV.global==='pass'?'ok':'danger'}">${lastV.global==='pass'?'PASA':'FALLA'}</span></div>
+      <div class="meta-item"><div class="meta-label">Técnico</div><div class="meta-value" style="font-size:12px">${lastV.tecnico||'—'}</div></div>
+      <div class="meta-item"><div class="meta-label">Patrón</div><div class="meta-value" style="font-size:12px">${lastV.patron||'—'}</div></div>
+    </div>` : '<div style="font-size:13px;color:var(--text2)">Sin verificaciones registradas</div>'}
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal('modalDetalle');openVerif('${foto.id}')">🧪 Nueva verificación</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal('modalDetalle');openCalAnual()">📋 Nueva calibración</button>
+    </div>
+    ${foto.notas ? `<div style="margin-top:12px;font-size:12px;color:var(--text2);padding:10px;background:var(--bg);border-radius:8px;">${foto.notas}</div>` : ''}
+  `;
+  openModal('modalDetalle');
+}
+
+function editFotometro() {
+  closeModal('modalDetalle');
+  openFotometro(detalleFotoId);
+}
+
+function confirmDelete() {
+  openModal('confirmDialog');
+}
+function closeConfirm() { closeModal('confirmDialog'); }
+function doDelete() {
+  setFotos(getFotos().filter(f => f.id !== detalleFotoId));
+  setVerifs(getVerifs().filter(v => v.fotoId !== detalleFotoId));
+  setCals(getCals().filter(c => c.fotoId !== detalleFotoId));
+  closeModal('confirmDialog');
+  closeModal('modalDetalle');
+  saveToGitHub();
+  renderAll();
+}
+
+// Fix confirm dialog close
+document.getElementById('confirmDialog').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirmDialog')) closeConfirm();
+});
+
+// ============================================================
+//  NAVEGACIÓN
+// ============================================================
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'trazabilidad') renderTrazSelector();
+}
+
+// ============================================================
+//  EXPORTAR CSV
+// ============================================================
+function exportCSV() {
+  const fotos = getFotos();
+  const verifs = getVerifs();
+  const cals = getCals();
+
+  // --- Hoja 1: Fotómetros ---
+  let csv = 'FOTÓMETROS\n';
+  csv += 'Nombre,Nº Serie,Parámetro,Ubicación,Estado,Últ. Cal. Anual,Laboratorio,Nº Certificado,Notas\n';
+  fotos.forEach(f => {
+    csv += [f.nombre, f.serie, f.param, f.ubicacion, f.estado, f.calFecha||'', f.calLab||'', f.calCert||'', (f.notas||'').replace(/,/g,' ')].map(v => `"${v}"`).join(',') + '\n';
+  });
+
+  csv += '\nVERIFICACIONES MENSUALES\n';
+  csv += 'Fotómetro,Nº Serie,Fecha,Patrón/Kit,Parámetros,Técnico,Resultado Global,Observaciones\n';
+  verifs.sort((a,b)=>a.fecha<b.fecha?1:-1).forEach(v => {
+    const foto = fotos.find(f => f.id === v.fotoId);
+    const paramsStr = (v.params||[]).map(p=>`${p.nombre}: ${p.valor} [${p.status==='pass'?'OK':'FALLO'}]`).join(' | ');
+    csv += [foto?.nombre||'—', foto?.serie||'—', v.fecha, v.patron||'', paramsStr, v.tecnico||'', v.global==='pass'?'PASA':'FALLA', (v.notas||'').replace(/,/g,' ')].map(v=>`"${v}"`).join(',') + '\n';
+  });
+
+  csv += '\nCALIBRACIONES ANUALES (ADICIONALES)\n';
+  csv += 'Fotómetro,Nº Serie,Fecha,Laboratorio,Nº Certificado,Resultado/Incertidumbre,Válida hasta,Observaciones\n';
+  cals.sort((a,b)=>a.fecha<b.fecha?1:-1).forEach(c => {
+    const foto = fotos.find(f => f.id === c.fotoId);
+    csv += [foto?.nombre||'—', foto?.serie||'—', c.fecha, c.lab||'', c.cert||'', c.resultado||'', c.vigencia||'', (c.notas||'').replace(/,/g,' ')].map(v=>`"${v}"`).join(',') + '\n';
+  });
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `FotoCalib_${today()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+//  EXPORTAR PDF (ventana de impresión con estilos propios)
+// ============================================================
+function exportPDF() {
+  const fotos = getFotos();
+  const verifs = getVerifs().sort((a,b)=>a.fecha<b.fecha?1:-1);
+  const cals = getCals().sort((a,b)=>a.fecha<b.fecha?1:-1);
+  const nowStr = new Date().toLocaleDateString('es-ES', {day:'2-digit',month:'2-digit',year:'numeric'});
+
+  const statusBadge = (s, label) => {
+    const colors = {ok:'#00a86b', warn:'#cc8800', danger:'#cc2233', pass:'#00a86b', fail:'#cc2233'};
+    const labels = {ok:'CORRECTO', warn:'ATENCIÓN', danger:'VENCIDO', pass:'PASA', fail:'FALLA'};
+    const c = colors[s] || '#666';
+    return `<span style="background:${c}20;color:${c};border:1px solid ${c}40;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">${label||labels[s]||s.toUpperCase()}</span>`;
+  };
+
+  let html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<title>FotoCalib — Informe ${nowStr}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 12px; color: #111; background: #fff; padding: 20px; }
+  h1 { font-size: 20px; color: #003366; margin-bottom: 4px; }
+  .subtitle { font-size: 11px; color: #555; margin-bottom: 20px; }
+  h2 { font-size: 14px; color: #003366; border-bottom: 2px solid #003366; padding-bottom: 4px; margin: 20px 0 10px; }
+  h3 { font-size: 13px; color: #333; margin: 14px 0 6px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 11px; }
+  th { background: #003366; color: #fff; padding: 6px 8px; text-align: left; }
+  td { padding: 5px 8px; border-bottom: 1px solid #dde; vertical-align: top; }
+  tr:nth-child(even) td { background: #f5f8ff; }
+  .badge { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+  .ok { background: #e6f9f0; color: #006633; }
+  .danger { background: #fde8ea; color: #cc2233; }
+  .warn { background: #fff5cc; color: #886600; }
+  .mono { font-family: 'Courier New', monospace; }
+  .page-break { page-break-after: always; }
+  .header-bar { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #003366; padding-bottom: 12px; margin-bottom: 16px; }
+  .logo-text { font-size: 24px; font-weight: 900; color: #003366; letter-spacing: -1px; }
+  .logo-sub { font-size: 10px; color: #666; }
+  footer { margin-top: 24px; border-top: 1px solid #dde; padding-top: 8px; font-size: 10px; color: #888; display: flex; justify-content: space-between; }
+  @media print {
+    body { padding: 10px; }
+    .no-print { display: none; }
+    @page { margin: 15mm; size: A4; }
+  }
+</style></head><body>`;
+
+html += `<div class="header-bar">
+<div><div class="logo-text">FotoCalib</div><div class="logo-sub">Gestión de calibraciones de fotómetros · RD 3/2023 · RD 487/2022</div></div>
+<div style="text-align:right;font-size:11px;color:#555;">Fecha de informe: <strong>${nowStr}</strong><br>Total fotómetros: <strong>${fotos.length}</strong></div>
+
+  </div>`;
+
+// — SECCIÓN FOTÓMETROS —
+html += `<h2>📟 Fotómetros registrados</h2>
+
+  <table>
+    <thead><tr><th>Nombre / Modelo</th><th>Nº Serie</th><th>Parámetro</th><th>Ubicación</th><th>Últ. Calibración</th><th>Laboratorio</th><th>Certificado</th><th>Estado</th></tr></thead>
+    <tbody>`;
+  fotos.forEach(f => {
+    const s = getDeviceStatus(f);
+    html += `<tr>
+      <td><strong>${f.nombre}</strong></td>
+      <td class="mono">${f.serie||'—'}</td>
+      <td>${f.param}</td>
+      <td>${f.ubicacion||'—'}</td>
+      <td class="mono">${fmtDate(f.calFecha)}</td>
+      <td>${f.calLab||'—'}</td>
+      <td class="mono">${f.calCert||'—'}</td>
+      <td><span class="badge ${s.overall}">${{ok:'CORRECTO',warn:'ATENCIÓN',danger:'VENCIDO'}[s.overall]}</span></td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+
+// — SECCIÓN CALIBRACIONES ANUALES —
+const allCals = [];
+fotos.forEach(f => { if(f.calFecha) allCals.push({…f, fecha: f.calFecha, lab: f.calLab, cert: f.calCert, resultado: ‘’, vigencia: nextCalDate(f.calFecha), notas: f.notas, _type:‘inicial’}); });
+cals.forEach(c => { const f = fotos.find(x=>x.id===c.fotoId); allCals.push({…c, nombre: f?.nombre||’—’, serie: f?.serie||’—’, _type:‘adicional’}); });
+allCals.sort((a,b)=>a.fecha<b.fecha?1:-1);
+
+html += `<h2>📋 Calibraciones anuales</h2>
+
+  <table>
+    <thead><tr><th>Fotómetro</th><th>Nº Serie</th><th>Fecha</th><th>Laboratorio</th><th>Certificado</th><th>Resultado</th><th>Válida hasta</th></tr></thead>
+    <tbody>`;
+  allCals.forEach(c => {
+    html += `<tr>
+      <td><strong>${c.nombre||c.nombre}</strong></td>
+      <td class="mono">${c.serie||'—'}</td>
+      <td class="mono">${fmtDate(c.fecha)}</td>
+      <td>${c.lab||c.calLab||'—'}</td>
+      <td class="mono">${c.cert||c.calCert||'—'}</td>
+      <td>${c.resultado||'—'}</td>
+      <td class="mono">${fmtDate(c.vigencia)}</td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+
+// — SECCIÓN VERIFICACIONES —
+html += `<h2>🧪 Verificaciones mensuales (historial completo)</h2>`;
+
+fotos.forEach(f => {
+const fv = verifs.filter(v => v.fotoId === f.id);
+if (!fv.length) return;
+html += `<h3>${f.nombre} <span class="mono" style="font-weight:400;color:#666;">(${f.serie})</span></h3> <table> <thead><tr><th>Fecha</th><th>Patrón / Kit</th><th>Parámetros verificados</th><th>Técnico</th><th>Resultado</th><th>Observaciones</th></tr></thead> <tbody>`;
+fv.forEach(v => {
+const paramsStr = (v.params||[]).map(p=>`${p.nombre}: ${p.valor} [${p.status==='pass'?'OK':'FALLO'}]`).join(’<br>’);
+html += `<tr> <td class="mono">${fmtDate(v.fecha)}</td> <td>${v.patron||'—'}</td> <td>${paramsStr}</td> <td>${v.tecnico||'—'}</td> <td><span class="badge ${v.global==='pass'?'ok':'danger'}">${v.global==='pass'?'PASA':'FALLA'}</span></td> <td style="font-style:italic;color:#666;">${v.notas||''}</td> </tr>`;
+});
+html += `</tbody></table>`;
+});
+
+html += `<footer>
+<span>FotoCalib · RD 3/2023 · RD 487/2022 — Informe generado el ${nowStr}</span>
+<span>Documento de trazabilidad de fotómetros</span>
+
+  </footer>
+  <div class="no-print" style="text-align:center;margin:20px;">
+    <button onclick="window.print()" style="padding:10px 24px;background:#003366;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">🖨️ Imprimir / Guardar PDF</button>
+    <button onclick="window.close()" style="padding:10px 24px;background:#eee;color:#333;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin-left:8px;">Cerrar</button>
+  </div>
+  </body></html>`;
+
+const w = window.open(’’, ‘_blank’, ‘width=900,height=700’);
+w.document.write(html);
+w.document.close();
+}
+
+// ============================================================
+//  SETTINGS
+// ============================================================
+function openSettings() {
+document.getElementById(‘sToken’).value = GH.token;
+document.getElementById(‘settingsStatus’).textContent = ‘’;
+// Mostrar aviso si estamos dentro de Claude.ai u otro sandbox
+const isSandboxed = window.location.hostname.includes(‘claude.ai’)
+|| window.location.hostname.includes(‘anthropic’)
+|| window.location.hostname === ‘’;
+document.getElementById(‘sandboxWarning’).style.display = isSandboxed ? ‘block’ : ‘none’;
+openModal(‘modalSettings’);
+}
+
+function saveSettings() {
+const token = document.getElementById(‘sToken’).value.trim();
+if (token) localStorage.setItem(‘fc_gh_token’, token);
+else localStorage.removeItem(‘fc_gh_token’);
+closeModal(‘modalSettings’);
+// Recargar desde GitHub con el nuevo token
+loadFromGitHub().then(() => renderAll());
+}
+
+async function testGitHub() {
+const token = document.getElementById(‘sToken’).value.trim();
+const el = document.getElementById(‘settingsStatus’);
+el.style.color = ‘var(–text2)’;
+el.textContent = ‘⏳ Probando…’;
+try {
+const res = await fetch(GH.apiUrl, {
+headers: {
+‘Authorization’: `Bearer ${token}`,
+‘Accept’: ‘application/vnd.github+json’
+}
+});
+if (res.ok) {
+el.style.color = ‘var(–accent2)’;
+el.textContent = ‘✅ Conexión correcta. El archivo existe y es accesible.’;
+} else if (res.status === 404) {
+el.style.color = ‘var(–warn)’;
+el.textContent = ‘⚠️ Token OK pero el archivo no existe aún. Se creará al guardar.’;
+} else if (res.status === 401) {
+el.style.color = ‘var(–danger)’;
+el.textContent = ‘❌ Token inválido o sin permisos suficientes.’;
+} else {
+el.style.color = ‘var(–danger)’;
+el.textContent = `❌ Error HTTP ${res.status}`;
+}
+} catch(e) {
+// Detectar si es un bloqueo de sandbox (CSP) o error de red real
+const isSandboxed = window.location.hostname.includes(‘claude.ai’)
+|| window.location.hostname.includes(‘anthropic’)
+|| window.location.hostname === ‘’;
+el.style.color = ‘var(–warn)’;
+if (isSandboxed) {
+el.innerHTML = ‘⚠️ <strong style="color:var(--text)">Estás dentro de Claude.ai</strong>, que bloquea llamadas externas.<br>Abre el archivo en Safari o en GitHub Pages y funcionará perfectamente.’;
+} else {
+el.style.color = ‘var(–danger)’;
+el.textContent = ‘❌ Error de red. ¿Tienes conexión a internet?’;
+}
+}
+}
+
+</script>
 </body>
 </html>
