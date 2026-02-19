@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-02-19T14:03:21.863Z",
+  "lastUpdated": "2026-02-19T17:21:04.584Z",
   "fotometros": [
     {
       "id": "1771508921917cay5",
@@ -37,19 +37,32 @@
       "calLab": "NEXBIOLINEA",
       "calCert": "TC/26_023",
       "notas": ""
+    },
+    {
+      "id": "1771521664584pumq",
+      "tipo": "fotometro",
+      "nombre": "asdfsdfsdf",
+      "serie": "sdfasdf",
+      "param": "Cloro libre",
+      "ubicacion": "sdfasdf",
+      "estado": "activo",
+      "calFecha": "2026-02-19",
+      "calLab": "asdfasdf",
+      "calCert": "asdfsdf",
+      "notas": "asdfsdf"
     }
   ],
   "verificaciones": [
     {
-      "id": "1771509525252nmte",
-      "fotoId": "1771509514484qr35",
+      "id": "1771509801862i42v",
+      "fotoId": "1771509774698z2rk",
       "fecha": "2026-02-19",
       "patron": "",
-      "tecnico": "",
+      "tecnico": "Miguel M",
       "params": [
         {
-          "nombre": "ParÃ¡metro 1",
-          "valor": "",
+          "nombre": "TEMPERATURA",
+          "valor": "1",
           "status": "pass"
         }
       ],
@@ -83,15 +96,15 @@
       "notas": "Todo correcto"
     },
     {
-      "id": "1771509801862i42v",
-      "fotoId": "1771509774698z2rk",
+      "id": "1771509525252nmte",
+      "fotoId": "1771509514484qr35",
       "fecha": "2026-02-19",
       "patron": "",
-      "tecnico": "Miguel M",
+      "tecnico": "",
       "params": [
         {
-          "nombre": "TEMPERATURA",
-          "valor": "1",
+          "nombre": "ParÃ¡metro 1",
+          "valor": "",
           "status": "pass"
         }
       ],
