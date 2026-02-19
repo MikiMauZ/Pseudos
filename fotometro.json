@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-02-19T13:58:34.485Z",
+  "lastUpdated": "2026-02-19T13:58:45.253Z",
   "fotometros": [
     {
       "id": "1771508921917cay5",
@@ -53,6 +53,22 @@
       ],
       "global": "pass",
       "notas": "Todo correcto"
+    },
+    {
+      "id": "1771509525252nmte",
+      "fotoId": "1771509514484qr35",
+      "fecha": "2026-02-19",
+      "patron": "",
+      "tecnico": "",
+      "params": [
+        {
+          "nombre": "Parámetro 1",
+          "valor": "",
+          "status": "pass"
+        }
+      ],
+      "global": "pass",
+      "notas": ""
     }
   ],
   "calibraciones": []
