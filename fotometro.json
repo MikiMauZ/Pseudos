@@ -1,19 +1,19 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-02-19T17:22:53.819Z",
+  "lastUpdated": "2026-02-19T17:26:58.433Z",
   "fotometros": [
     {
       "id": "1771508921917cay5",
       "tipo": "fotometro",
       "nombre": "Lovivond MD 110",
       "serie": "21/63305",
-      "param": "",
+      "param": "Multiparámetro",
       "ubicacion": "TALLER WAVE",
       "estado": "activo",
       "calFecha": "2026-02-16",
       "calLab": "NEXBIOLINEA",
       "calCert": "FTC/26_046",
-      "notas": "CORRECTO\n\nVALIDA HASTA 16/02/27"
+      "notas": ""
     },
     {
       "id": "1771509514484qr35",
@@ -44,15 +44,15 @@
   ],
   "verificaciones": [
     {
-      "id": "1771509525252nmte",
-      "fotoId": "1771509514484qr35",
+      "id": "1771509801862i42v",
+      "fotoId": "1771509774698z2rk",
       "fecha": "2026-02-19",
       "patron": "",
-      "tecnico": "",
+      "tecnico": "Miguel M",
       "params": [
         {
-          "nombre": "ParÃ¡metro 1",
-          "valor": "",
+          "nombre": "TEMPERATURA",
+          "valor": "1",
           "status": "pass"
         }
       ],
@@ -86,15 +86,15 @@
       "notas": "Todo correcto"
     },
     {
-      "id": "1771509801862i42v",
-      "fotoId": "1771509774698z2rk",
+      "id": "1771509525252nmte",
+      "fotoId": "1771509514484qr35",
       "fecha": "2026-02-19",
       "patron": "",
-      "tecnico": "Miguel M",
+      "tecnico": "",
       "params": [
         {
-          "nombre": "TEMPERATURA",
-          "valor": "1",
+          "nombre": "ParÃ¡metro 1",
+          "valor": "",
           "status": "pass"
         }
       ],
