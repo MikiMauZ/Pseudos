@@ -1,18 +1,30 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-02-19T13:55:02.753Z",
+  "lastUpdated": "2026-02-19T13:58:34.485Z",
   "fotometros": [
     {
       "id": "1771508921917cay5",
       "nombre": "Lovivond MD 110",
       "serie": "21/63305",
-      "param": "Multiparámetro",
+      "param": "MultiparÃ¡metro",
       "ubicacion": "TALLER WAVE",
       "estado": "activo",
       "calFecha": "2026-02-16",
       "calLab": "NEXBIOLINEA",
       "calCert": "FTC/26_046",
       "notas": "CORRECTO\n\nVALIDA HASTA 16/02/27"
+    },
+    {
+      "id": "1771509514484qr35",
+      "nombre": "TURBIDIMETRO TURBICKECK",
+      "serie": "21/63305",
+      "param": "Turbidez",
+      "ubicacion": "TALLER WAVE",
+      "estado": "activo",
+      "calFecha": "2026-02-17",
+      "calLab": "NEXBIOLINEA",
+      "calCert": "TCL/26_028",
+      "notas": "TURBIDIMETRO"
     }
   ],
   "verificaciones": [
