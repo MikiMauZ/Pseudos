@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-02-19T11:46:11.872Z",
+  "lastUpdated": "2026-02-19T11:47:35.442Z",
   "fotometros": [
     {
       "id": "17715015718725upj",
@@ -15,6 +15,28 @@
       "notas": "Hfnnffkf"
     }
   ],
-  "verificaciones": [],
+  "verificaciones": [
+    {
+      "id": "17715016554416tel",
+      "fotoId": "17715015718725upj",
+      "fecha": "2026-02-20",
+      "patron": "Lote kfkfkkf",
+      "tecnico": "Miguel",
+      "params": [
+        {
+          "nombre": "Cloro",
+          "valor": "1",
+          "status": "pass"
+        },
+        {
+          "nombre": "Ph",
+          "valor": "7,89",
+          "status": "pass"
+        }
+      ],
+      "global": "pass",
+      "notas": ""
+    }
+  ],
   "calibraciones": []
 }
