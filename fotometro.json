@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-02-19T13:48:41.918Z",
+  "lastUpdated": "2026-02-19T13:55:02.753Z",
   "fotometros": [
     {
       "id": "1771508921917cay5",
@@ -15,6 +15,33 @@
       "notas": "CORRECTO\n\nVALIDA HASTA 16/02/27"
     }
   ],
-  "verificaciones": [],
+  "verificaciones": [
+    {
+      "id": "1771509302753vhqh",
+      "fotoId": "1771508921917cay5",
+      "fecha": "2026-02-19",
+      "patron": "48599",
+      "tecnico": "Miguel M",
+      "params": [
+        {
+          "nombre": "Ph",
+          "valor": "7,48  - 7.49",
+          "status": "pass"
+        },
+        {
+          "nombre": "Cl",
+          "valor": "0.25 - 0.25",
+          "status": "pass"
+        },
+        {
+          "nombre": "Cl",
+          "valor": "1.01 - 1.01",
+          "status": "pass"
+        }
+      ],
+      "global": "pass",
+      "notas": "Todo correcto"
+    }
+  ],
   "calibraciones": []
 }
